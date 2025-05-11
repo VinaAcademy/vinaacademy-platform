@@ -132,8 +132,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String accessToken = jwtService.generateAccessToken(userDetails);
         String refreshToken = jwtService.generateRefreshToken(userDetails);
-        
-        
+
+
         RefreshToken token = RefreshToken.builder()
                 .token(refreshToken)
                 .username(userDetails.getUsername())
@@ -155,6 +155,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         } catch (AuthenticationException ex) {
             String message = authenticationExceptionMessage(ex);
+            if (ex instanceof DisabledException) {
+                // 1. check token expired
+                // 2. if expired, resend token
+                // 3. if not expired, throw exception
+                ActionToken actionToken = actionTokenRepository.findByUserAndType(
+                                userRepository.findByEmail(email).orElseThrow(() -> BadRequestException.message("Không tìm thấy người dùng: " + email)),
+                                ActionTokenType.VERIFY_ACCOUNT)
+                        .orElseThrow(() -> BadRequestException.message("Không tìm thấy token xác thực"));
+                if (actionToken.getExpiredAt().isBefore(LocalDateTime.now())) {
+                    actionToken.setExpiredAt(LocalDateTime.now().plusHours(AuthConstants.ACTION_TOKEN_EXPIRED_HOURS));
+                    actionTokenRepository.save(actionToken);
+                    emailService.sendVerificationEmail(email, actionToken.getToken());
+                }
+            }
             throw BadRequestException.message(message);
         }
     }
@@ -164,7 +178,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (ex instanceof BadCredentialsException) {
             message = "Sai tên đăng nhập hoặc mật khẩu";
         } else if (ex instanceof DisabledException) {
-            message = "Tài khoản đã bị khóa";
+            message = "Tài khoản chưa được xác thực, vui lòng kiểm tra email";
         } else if (ex instanceof LockedException) {
             message = "Tài khoản đã bị khóa";
         } else if (ex instanceof AccountExpiredException) {
@@ -340,11 +354,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         logService.log(LogConstants.AUTH_KEY, LogConstants.RESET_PASSWORD_ACTION, null, Map.of("email", user.getEmail()));
     }
-    
+
     @Override
     @Transactional
     public boolean changePassword(ChangePasswordRequest request) {
-    	 User user = securityHelper.getCurrentUser();
+        User user = securityHelper.getCurrentUser();
         if (!StringUtils.equals(request.getNewPassword(), request.getRetypedPassword())) {
             throw BadRequestException.message("Mật khẩu mới không khớp");
         }
@@ -358,7 +372,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        logService.log(LogConstants.USER_KEY, LogConstants.CHANGE_PASSWORD_ACTION, null, 
+        logService.log(LogConstants.USER_KEY, LogConstants.CHANGE_PASSWORD_ACTION, null,
                 Map.of("userId", user.getId().toString()));
         return true;
     }
