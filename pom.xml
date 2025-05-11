@@ -160,12 +160,6 @@
             <artifactId>commons-beanutils</artifactId>
             <version>1.10.1</version>
         </dependency>
-
-        <dependency>
-        	<groupId>Webapp_3rdYear</groupId>
-        	<artifactId>Webapp_3rdYear</artifactId>
-        	<version>0.0.1-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 
     <build>
