@@ -169,8 +169,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         ActionToken token = actionTokenRepository.findForUpdate(user, ActionTokenType.VERIFY_ACCOUNT)
                 .orElseThrow(() -> BadRequestException.message("Không tìm thấy token"));
 
-        if (token.getExpiredAt().isBefore(LocalDateTime.now())) {
-            token.setExpiredAt(LocalDateTime.now().plusHours(AuthConstants.ACTION_TOKEN_EXPIRED_HOURS));
+        LocalDateTime now = LocalDateTime.now();
+        if (token.getExpiredAt().isBefore(now)) {
+            token.setExpiredAt(now.plusHours(AuthConstants.ACTION_TOKEN_EXPIRED_HOURS));
             actionTokenRepository.save(token);
             emailService.sendVerificationEmail(email, token.getToken());
         }
