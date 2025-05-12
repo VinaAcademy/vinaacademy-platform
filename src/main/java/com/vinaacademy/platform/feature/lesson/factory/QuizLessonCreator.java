@@ -39,7 +39,7 @@ public class QuizLessonCreator extends LessonCreator {
     
     @Override
     public Lesson createLesson(LessonRequest request, Section section, User author) {
-        validateRequest(request);
+//        validateRequest(request);
         
         Quiz quiz = Quiz.builder()
                 .title(request.getTitle())
