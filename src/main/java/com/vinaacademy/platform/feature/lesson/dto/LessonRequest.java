@@ -52,13 +52,13 @@ public class LessonRequest {
     private String content;
     
     // For Quiz lessons
-    @Min(value = 0, message = "Điểm đạt không được âm")
+//    @Min(value = 0, message = "Điểm đạt không được âm")
     private Double passPoint;
     
-    @Min(value = 0, message = "Tổng điểm không được âm")
+//    @Min(value = 0, message = "Tổng điểm không được âm")
     private Double totalPoint;
     
-    @Min(value = 0, message = "Thời gian làm bài không được âm")
+//    @Min(value = 0, message = "Thời gian làm bài không được âm")
     private Integer duration;
     
     // Quiz settings - map stores settings like randomizeQuestions, showCorrectAnswers, etc.

@@ -345,12 +345,15 @@ public class QuizServiceImpl implements QuizService {
 
         // Create a new session
         QuizSession session = QuizSession.createNewSession(quiz, currentUser);
-        ZoneOffset vnZoneOffset = ZoneOffset.ofHours(7);
+        LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(quiz.getTimeLimit());
+        session.setExpiryTime(expiryTime);
         taskScheduler.schedule(() -> {
             this.processSubmitQuiz(quizSessionService.getQuizSubmissionBySession(session),
                     session, session.getStartTime(), LocalDateTime.now());
             quizSessionService.deactivateSession(session);
-        }, session.getExpiryTime().toInstant(vnZoneOffset));
+        }, session.getExpiryTime()
+                .atZone(ZoneOffset.systemDefault())
+                .toInstant());
         return quizSessionRepository.save(session);
     }
 
