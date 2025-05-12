@@ -156,22 +156,27 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         } catch (AuthenticationException ex) {
             String message = authenticationExceptionMessage(ex);
             if (ex instanceof DisabledException) {
-                // 1. check token expired
-                // 2. if expired, resend token
-                // 3. if not expired, throw exception
-                ActionToken actionToken = actionTokenRepository.findByUserAndType(
-                                userRepository.findByEmail(email).orElseThrow(() -> BadRequestException.message("Không tìm thấy người dùng: " + email)),
-                                ActionTokenType.VERIFY_ACCOUNT)
-                        .orElseThrow(() -> BadRequestException.message("Không tìm thấy token xác thực"));
-                if (actionToken.getExpiredAt().isBefore(LocalDateTime.now())) {
-                    actionToken.setExpiredAt(LocalDateTime.now().plusHours(AuthConstants.ACTION_TOKEN_EXPIRED_HOURS));
-                    actionTokenRepository.save(actionToken);
-                    emailService.sendVerificationEmail(email, actionToken.getToken());
-                }
+                handleDisabledException(email);
             }
             throw BadRequestException.message(message);
         }
     }
+
+    private void handleDisabledException(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> BadRequestException.message("Không tìm thấy người dùng"));
+
+        ActionToken token = actionTokenRepository.findForUpdate(user, ActionTokenType.VERIFY_ACCOUNT)
+                .orElseThrow(() -> BadRequestException.message("Không tìm thấy token"));
+
+        LocalDateTime now = LocalDateTime.now();
+        if (token.getExpiredAt().isBefore(now)) {
+            token.setExpiredAt(now.plusHours(AuthConstants.ACTION_TOKEN_EXPIRED_HOURS));
+            actionTokenRepository.save(token);
+            emailService.sendVerificationEmail(email, token.getToken());
+        }
+    }
+
 
     private static String authenticationExceptionMessage(AuthenticationException ex) {
         String message = "Lỗi xác thực không xác định";
