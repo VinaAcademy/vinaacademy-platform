@@ -28,4 +28,6 @@ public interface AnswerRepository extends JpaRepository<Answer, UUID> {
     List<Answer> findByQuestionIdIn(List<UUID> questionIds);
 
     void deleteByQuestionId(UUID id);
+
+    long countByQuestionIdAndIsCorrect(UUID id, boolean b);
 }

@@ -28,36 +28,6 @@ public interface QuizService {
     List<QuizDto> getQuizzesBySectionId(UUID sectionId);
     
     /**
-     * Create a new question for a quiz
-     */
-    QuestionDto createQuestion(UUID quizId, QuestionDto questionDto);
-    
-    /**
-     * Update an existing question
-     */
-    QuestionDto updateQuestion(UUID questionId, QuestionDto questionDto);
-    
-    /**
-     * Delete a question
-     */
-    void deleteQuestion(UUID questionId);
-    
-    /**
-     * Create an answer for a question
-     */
-    AnswerDto createAnswer(UUID questionId, AnswerDto answerDto);
-    
-    /**
-     * Update an existing answer
-     */
-    AnswerDto updateAnswer(UUID answerId, AnswerDto answerDto);
-    
-    /**
-     * Delete an answer
-     */
-    void deleteAnswer(UUID answerId);
-    
-    /**
      * Start a quiz attempt and record the server start time
      */
     QuizSession startQuiz(UUID quizId);

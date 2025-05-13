@@ -5,6 +5,8 @@ import com.vinaacademy.platform.feature.course.enums.LessonType;
 import com.vinaacademy.platform.feature.lesson.dto.LessonDto;
 import com.vinaacademy.platform.feature.lesson.service.LessonService;
 import com.vinaacademy.platform.feature.quiz.dto.*;
+import com.vinaacademy.platform.feature.quiz.service.AnswerService;
+import com.vinaacademy.platform.feature.quiz.service.QuestionService;
 import com.vinaacademy.platform.feature.quiz.service.QuizService;
 import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
 import com.vinaacademy.platform.feature.user.constant.AuthConstants;
@@ -31,6 +33,8 @@ import java.util.UUID;
 @Tag(name = "Instructor Quiz", description = "Instructor quiz management APIs")
 public class QuizInstructorController {
     private final QuizService quizService;
+    private final AnswerService answerService;
+    private final QuestionService questionService;
     private final LessonService lessonService;
 
     @Operation(summary = "Create a new quiz as a lesson")
@@ -62,7 +66,7 @@ public class QuizInstructorController {
         // If questions are provided, add them to the quiz
         if (request.getQuestions() != null && !request.getQuestions().isEmpty()) {
             for (QuestionDto questionDto : request.getQuestions()) {
-                quizService.createQuestion(lessonDto.getId(), questionDto);
+                questionService.createQuestion(lessonDto.getId(), questionDto);
             }
 
             // Fetch the updated lesson with questions
@@ -173,7 +177,7 @@ public class QuizInstructorController {
     public ApiResponse<QuestionDto> createQuestion(
             @PathVariable UUID quizId,
             @RequestBody @Valid QuestionDto questionDto) {
-        return ApiResponse.success(quizService.createQuestion(quizId, questionDto));
+        return ApiResponse.success(questionService.createQuestion(quizId, questionDto));
     }
 
     @Operation(summary = "Update an existing question")
@@ -197,7 +201,7 @@ public class QuizInstructorController {
     public ApiResponse<QuestionDto> updateQuestion(
             @PathVariable UUID questionId,
             @RequestBody @Valid QuestionDto questionDto) {
-        return ApiResponse.success(quizService.updateQuestion(questionId, questionDto));
+        return ApiResponse.success(questionService.updateQuestion(questionId, questionDto));
     }
 
     @Operation(summary = "Delete a question")
@@ -214,7 +218,7 @@ public class QuizInstructorController {
     @HasAnyRole({AuthConstants.ADMIN_ROLE, AuthConstants.INSTRUCTOR_ROLE})
     @DeleteMapping("/questions/{questionId}")
     public ApiResponse<Void> deleteQuestion(@PathVariable UUID questionId) {
-        quizService.deleteQuestion(questionId);
+        questionService.deleteQuestion(questionId);
         return ApiResponse.success("Question deleted successfully");
     }
 
@@ -240,7 +244,7 @@ public class QuizInstructorController {
     public ApiResponse<AnswerDto> createAnswer(
             @PathVariable UUID questionId,
             @RequestBody @Valid AnswerDto answerDto) {
-        return ApiResponse.success(quizService.createAnswer(questionId, answerDto));
+        return ApiResponse.success(answerService.createAnswer(questionId, answerDto));
     }
 
     @Operation(summary = "Update an existing answer")
@@ -264,7 +268,7 @@ public class QuizInstructorController {
     public ApiResponse<AnswerDto> updateAnswer(
             @PathVariable UUID answerId,
             @RequestBody @Valid AnswerDto answerDto) {
-        return ApiResponse.success(quizService.updateAnswer(answerId, answerDto));
+        return ApiResponse.success(answerService.updateAnswer(answerId, answerDto));
     }
 
     @Operation(summary = "Delete an answer")
@@ -281,7 +285,7 @@ public class QuizInstructorController {
     @HasAnyRole({AuthConstants.ADMIN_ROLE, AuthConstants.INSTRUCTOR_ROLE})
     @DeleteMapping("/answers/{answerId}")
     public ApiResponse<Void> deleteAnswer(@PathVariable UUID answerId) {
-        quizService.deleteAnswer(answerId);
+        answerService.deleteAnswer(answerId);
         return ApiResponse.success("Answer deleted successfully");
     }
 
