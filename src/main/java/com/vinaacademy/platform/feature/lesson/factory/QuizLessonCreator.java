@@ -39,7 +39,7 @@ public class QuizLessonCreator extends LessonCreator {
     
     @Override
     public Lesson createLesson(LessonRequest request, Section section, User author) {
-        validateRequest(request);
+//        validateRequest(request);
         
         Quiz quiz = Quiz.builder()
                 .title(request.getTitle())
@@ -48,9 +48,9 @@ public class QuizLessonCreator extends LessonCreator {
                 .free(request.isFree())
                 .orderIndex(request.getOrderIndex())
                 .author(author)
-                .passingScore(request.getPassPoint())
-                .totalPoints(request.getTotalPoint())
-                .duration(request.getDuration())
+//                .passingScore(request.getPassPoint())
+//                .totalPoints(request.getTotalPoint())
+//                .duration(request.getDuration())
                 .build();
         
         // Apply quiz settings if provided
@@ -61,7 +61,7 @@ public class QuizLessonCreator extends LessonCreator {
     
     @Override
     public Lesson updateLesson(Lesson lesson, LessonRequest request) {
-        validateUpdateRequest(request);
+//        validateUpdateRequest(request);
         
         if (!(lesson instanceof Quiz quiz)) {
             throw new ValidationException("Cannot update a non-Quiz lesson with Quiz data");
@@ -69,7 +69,7 @@ public class QuizLessonCreator extends LessonCreator {
         
         quiz.setPassingScore(request.getPassPoint());
         quiz.setTotalPoints(request.getTotalPoint());
-        quiz.setDuration(request.getDuration());
+//        quiz.setDuration(request.getDuration());
         
         // Apply quiz settings if provided
         applyQuizSettings(quiz, request.getSettings());

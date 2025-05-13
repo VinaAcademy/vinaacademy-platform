@@ -365,21 +365,21 @@ public class LessonServiceImpl implements LessonService {
                 break;
 
             case QUIZ:
-                if (request.getPassPoint() == null || request.getTotalPoint() == null || request.getDuration() == null) {
-                    throw new ValidationException("Pass point, total point, and duration are required for quiz lessons");
-                }
-
-                if (request.getPassPoint() < 0 || request.getTotalPoint() < 0) {
-                    throw new ValidationException("Points cannot be negative");
-                }
-
-                if (request.getPassPoint() > request.getTotalPoint()) {
-                    throw new ValidationException("Pass point cannot be greater than total point");
-                }
-
-                if (request.getDuration() <= 0) {
-                    throw new ValidationException("Duration must be positive");
-                }
+//                if (request.getPassPoint() == null || request.getTotalPoint() == null || request.getDuration() == null) {
+//                    throw new ValidationException("Pass point, total point, and duration are required for quiz lessons");
+//                }
+//
+//                if (request.getPassPoint() < 0 || request.getTotalPoint() < 0) {
+//                    throw new ValidationException("Points cannot be negative");
+//                }
+//
+//                if (request.getPassPoint() > request.getTotalPoint()) {
+//                    throw new ValidationException("Pass point cannot be greater than total point");
+//                }
+//
+//                if (request.getDuration() <= 0) {
+//                    throw new ValidationException("Duration must be positive");
+//                }
                 break;
 
             default:

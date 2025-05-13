@@ -7,6 +7,7 @@ import com.vinaacademy.platform.feature.quiz.entity.Answer;
 import com.vinaacademy.platform.feature.quiz.entity.Question;
 import com.vinaacademy.platform.feature.quiz.entity.Quiz;
 import org.mapstruct.*;
+import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
@@ -14,6 +15,7 @@ import java.util.List;
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface QuizMapper {
+    QuizMapper INSTANCE = Mappers.getMapper(QuizMapper.class);
 
     // Quiz mapping
     QuizDto quizToQuizDto(Quiz quiz);

@@ -33,6 +33,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -43,12 +44,12 @@ import java.util.stream.Collectors;
 @Slf4j
 public class QuizServiceImpl implements QuizService {
     private final QuizRepository quizRepository;
-    private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizSessionRepository quizSessionRepository;
     private final SectionRepository sectionRepository;
     private final UserProgressRepository userProgressRepository;
+    private final QuestionRepository questionRepository;
 
     private final QuizCacheService quizCacheService;
     private final QuizSessionService quizSessionService;
@@ -137,186 +138,6 @@ public class QuizServiceImpl implements QuizService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    @Transactional
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
-            permission = ResourceConstants.CREATE)
-    public QuestionDto createQuestion(UUID quizId, QuestionDto questionDto) {
-        Quiz quiz = findQuizById(quizId);
-
-        Question question = Question.builder()
-                .quiz(quiz)
-                .questionText(questionDto.getQuestionText())
-                .explanation(questionDto.getExplanation())
-                .point(questionDto.getPoint() != null ? questionDto.getPoint() : 1.0)
-                .questionType(questionDto.getQuestionType() != null ? questionDto.getQuestionType() : QuestionType.SINGLE_CHOICE)
-                .build();
-
-        Question savedQuestion = questionRepository.save(question);
-
-        // Process associated answers if they exist
-        if (questionDto.getAnswers() != null && !questionDto.getAnswers().isEmpty()) {
-            questionDto.getAnswers().forEach(answerDto ->
-                    createAnswer(savedQuestion.getId(), answerDto));
-        }
-
-        // Update quiz total points
-        updateQuizTotalPoints(quiz);
-
-        return questionRepository.findById(savedQuestion.getId())
-                .map(quizMapper::questionToQuestionDto)
-                .orElseThrow(() -> new NotFoundException("Question not found after creation"));
-    }
-
-    @Override
-    @Transactional
-    public QuestionDto updateQuestion(UUID questionId, QuestionDto questionDto) {
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new NotFoundException("Question not found with id: " + questionId));
-
-        question.setQuestionText(questionDto.getQuestionText());
-        question.setExplanation(questionDto.getExplanation());
-
-        if (questionDto.getPoint() != null) {
-            question.setPoint(questionDto.getPoint());
-        }
-
-        if (questionDto.getQuestionType() != null) {
-            updateQuestionType(question, questionDto.getQuestionType());
-        }
-
-        Question savedQuestion = questionRepository.save(question);
-
-        // Update quiz total points
-        updateQuizTotalPoints(savedQuestion.getQuiz());
-
-        return quizMapper.questionToQuestionDto(savedQuestion);
-    }
-
-    private void updateQuestionType(Question question, QuestionType questionType) {
-        QuestionType oldType = question.getQuestionType();
-        if (oldType == questionType) {
-            return;
-        }
-
-        question.setQuestionType(questionType);
-
-        // Xóa toàn bộ answer cũ bằng cách thao tác trực tiếp trên collection
-        List<Answer> existingAnswers = question.getAnswers();
-        boolean willClear = questionType == QuestionType.TRUE_FALSE ||
-                questionType == QuestionType.TEXT;
-        if (existingAnswers != null && willClear) {
-            existingAnswers.clear();
-        }
-
-        if (questionType == QuestionType.TRUE_FALSE) {
-            Answer trueAnswer = Answer.builder()
-                    .answerText("Đúng")
-                    .isCorrect(true)
-                    .build();
-
-            Answer falseAnswer = Answer.builder()
-                    .answerText("Sai")
-                    .isCorrect(false)
-                    .build();
-
-            question.addAnswer(trueAnswer); // sử dụng helper method đã có
-            question.addAnswer(falseAnswer);
-        }
-
-        if (questionType == QuestionType.SINGLE_CHOICE) {
-            assert question.getAnswers() != null;
-            long correctCount = question.getAnswers().stream().filter(Answer::getIsCorrect).count();
-            if (correctCount > 1) {
-                throw new ValidationException("Câu hỏi loại single choice chỉ được có một đáp án đúng");
-            }
-        }
-    }
-
-
-    @Override
-    @Transactional
-    public void deleteQuestion(UUID questionId) {
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new NotFoundException("Question not found with id: " + questionId));
-
-        Quiz quiz = question.getQuiz();
-        questionRepository.delete(question);
-
-        // Update quiz total points
-        updateQuizTotalPoints(quiz);
-    }
-
-    @Override
-    @Transactional
-    public AnswerDto createAnswer(UUID questionId, AnswerDto answerDto) {
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new NotFoundException("Question not found with id: " + questionId));
-
-        // For single choice, ensure we don't have multiple correct answers
-        if (question.getQuestionType() == QuestionType.SINGLE_CHOICE ||
-                question.getQuestionType() == QuestionType.TRUE_FALSE) {
-
-            if (Boolean.TRUE.equals(answerDto.getIsCorrect())) {
-                // Check if there's already a correct answer
-                boolean hasCorrectAnswer = !answerRepository.findByQuestionIdAndIsCorrect(questionId, true).isEmpty();
-
-                if (hasCorrectAnswer) {
-                    throw new ValidationException("Single choice and true/false questions can only have one correct answer");
-                }
-            }
-        }
-
-        Answer answer = Answer.builder()
-                .question(question)
-                .answerText(answerDto.getAnswerText())
-                .isCorrect(answerDto.getIsCorrect() != null ? answerDto.getIsCorrect() : false)
-                .build();
-
-        Answer savedAnswer = answerRepository.save(answer);
-        return quizMapper.answerToAnswerDto(savedAnswer);
-    }
-
-    @Override
-    @Transactional
-    public AnswerDto updateAnswer(UUID answerId, AnswerDto answerDto) {
-        Answer answer = answerRepository.findById(answerId)
-                .orElseThrow(() -> new NotFoundException("Answer not found with id: " + answerId));
-
-        Question question = answer.getQuestion();
-
-        // Check if we're changing this to be a correct answer in single choice questions
-        if (question.getQuestionType() == QuestionType.SINGLE_CHOICE ||
-                question.getQuestionType() == QuestionType.TRUE_FALSE) {
-
-            if (Boolean.TRUE.equals(answerDto.getIsCorrect()) && !answer.getIsCorrect()) {
-                // If we're making this the correct answer, remove correct flag from other answers
-                answerRepository.findByQuestionIdAndIsCorrect(question.getId(), true)
-                        .forEach(a -> {
-                            a.setIsCorrect(false);
-                            answerRepository.save(a);
-                        });
-            }
-        }
-
-        answer.setAnswerText(answerDto.getAnswerText());
-
-        if (answerDto.getIsCorrect() != null) {
-            answer.setIsCorrect(answerDto.getIsCorrect());
-        }
-
-        Answer savedAnswer = answerRepository.save(answer);
-        return quizMapper.answerToAnswerDto(savedAnswer);
-    }
-
-    @Override
-    @Transactional
-    public void deleteAnswer(UUID answerId) {
-        Answer answer = answerRepository.findById(answerId)
-                .orElseThrow(() -> new NotFoundException("Answer not found with id: " + answerId));
-
-        answerRepository.delete(answer);
-    }
 
     @Override
     @Transactional
@@ -345,12 +166,15 @@ public class QuizServiceImpl implements QuizService {
 
         // Create a new session
         QuizSession session = QuizSession.createNewSession(quiz, currentUser);
-        ZoneOffset vnZoneOffset = ZoneOffset.ofHours(7);
+        LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(quiz.getTimeLimit());
+        session.setExpiryTime(expiryTime);
         taskScheduler.schedule(() -> {
             this.processSubmitQuiz(quizSessionService.getQuizSubmissionBySession(session),
                     session, session.getStartTime(), LocalDateTime.now());
             quizSessionService.deactivateSession(session);
-        }, session.getExpiryTime().toInstant(vnZoneOffset));
+        }, session.getExpiryTime()
+                .atZone(ZoneOffset.systemDefault())
+                .toInstant());
         return quizSessionRepository.save(session);
     }
 
@@ -399,18 +223,20 @@ public class QuizServiceImpl implements QuizService {
         for (UserAnswerRequest userAnswerRequest : request.getAnswers()) {
             Question question = questionRepository.findById(userAnswerRequest.getQuestionId())
                     .orElseThrow(() -> new ValidationException("Question not found: " + userAnswerRequest.getQuestionId()));
+            QuestionType type = question.getQuestionType();
 
             UserAnswer userAnswer = createUserAnswer(submission, question, userAnswerRequest);
             submission.addUserAnswer(userAnswer);
 
-            if (userAnswer.isCorrect()) {
+            if (userAnswer.isCorrect() || type == QuestionType.MULTIPLE_CHOICE) {
                 earnedPoints += userAnswer.getEarnedPoints();
             }
         }
 
         // Calculate final score and pass status
         submission.setTotalPoints(totalPoints);
-        submission.setScore(earnedPoints);
+        submission.setScore(Double.parseDouble(new DecimalFormat("#.0")
+                .format(earnedPoints)));
 
         double scorePercentage = (totalPoints > 0) ? (earnedPoints / totalPoints) * 100 : 0;
         submission.setPassed(scorePercentage >= quiz.getPassingScore());
@@ -501,19 +327,6 @@ public class QuizServiceImpl implements QuizService {
                 .orElseThrow(() -> new NotFoundException("Quiz not found with id: " + id));
     }
 
-    /**
-     * Helper method to update a quiz's total points based on its questions
-     */
-    private void updateQuizTotalPoints(Quiz quiz) {
-        List<Question> questions = questionRepository.findByQuizOrderByCreatedDate(quiz);
-
-        double totalPoints = questions.stream()
-                .mapToDouble(Question::getPoint)
-                .sum();
-
-        quiz.setTotalPoints(totalPoints);
-        quizRepository.save(quiz);
-    }
 
     /**
      * Create a user answer entity from request
@@ -551,6 +364,28 @@ public class QuizServiceImpl implements QuizService {
                 boolean isCorrect = evaluateUserAnswer(question, selectedAnswers);
                 userAnswer.setCorrect(isCorrect);
                 userAnswer.setEarnedPoints(isCorrect ? question.getPoint() : 0);
+                if (question.getQuestionType() == QuestionType.MULTIPLE_CHOICE) {
+                    long correctCount = selectedAnswers.stream()
+                            .filter(Answer::getIsCorrect)
+                            .count();
+                    long incorrectCount = selectedAnswers.size() - correctCount;
+                    long totalCorrectCount = answerRepository
+                            .countByQuestionIdAndIsCorrect(question.getId(), true);
+                    long totalIncorrectCount = answerRepository
+                            .countByQuestionIdAndIsCorrect(question.getId(), false);
+                    if (totalCorrectCount == 0 || totalIncorrectCount == 0) {
+                        userAnswer.setEarnedPoints(0);
+                        return userAnswer;
+                    }
+
+                    double earnedPointRate = (correctCount * 1.0 / totalCorrectCount)
+                            - (incorrectCount * 1.0 / totalIncorrectCount);
+                    if (earnedPointRate < 0) {
+                        earnedPointRate = 0;
+                    }
+                    userAnswer.setEarnedPoints(Double.parseDouble(new DecimalFormat("#.0")
+                            .format(earnedPointRate * question.getPoint())));
+                }
             } else {
                 // No answer selected
                 userAnswer.setCorrect(false);
