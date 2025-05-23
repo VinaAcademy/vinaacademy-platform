@@ -1,7 +1,11 @@
 package com.vinaacademy.platform.feature.instructor.service;
 
+import com.vinaacademy.platform.configuration.AppConfig;
 import com.vinaacademy.platform.exception.BadRequestException;
 import com.vinaacademy.platform.feature.instructor.dto.InstructorInfoDto;
+import com.vinaacademy.platform.feature.notification.dto.NotificationCreateDTO;
+import com.vinaacademy.platform.feature.notification.enums.NotificationType;
+import com.vinaacademy.platform.feature.notification.service.NotificationService;
 import com.vinaacademy.platform.feature.user.UserRepository;
 import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
 import com.vinaacademy.platform.feature.user.constant.AuthConstants;
@@ -23,6 +27,8 @@ public class InstructorServiceImpl implements InstructorService {
     private RoleRepository roleRepository;
     @Autowired
     private SecurityHelper securityHelper;
+    @Autowired
+    private NotificationService notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -90,7 +96,25 @@ public class InstructorServiceImpl implements InstructorService {
         dto.setEmail(updatedUser.getEmail());
         dto.setDescription(updatedUser.getDescription());
         dto.setAvatarUrl(updatedUser.getAvatarUrl());
+
+        // send welcome notification to user
+        sendWelcomeNotification(updatedUser.getId());
         return dto;
+    }
+
+    private void sendWelcomeNotification(UUID userId) {
+        String title = "Chào mừng bạn đến cộng đồng giảng viên VinaAcademy";
+        String message = "Chúng tôi rất vui khi bạn trở thành một phần của cộng đồng giảng viên tại VinaAcademy.";
+        String targetUrl = AppConfig.INSTANCE.getFrontendUrl() + "/instructor/dashboard";
+        NotificationCreateDTO request = NotificationCreateDTO.builder()
+                .userId(userId)
+                .title(title)
+                .content(message)
+                .targetUrl(targetUrl)
+                .type(NotificationType.SYSTEM)
+                .build();
+
+        notificationService.createNotification(request);
     }
 
 //    @Override

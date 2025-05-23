@@ -26,7 +26,7 @@ public class EmailNotificationObserver implements NotificationObserver {
     @Override
     public void onNotificationCreated(NotificationDTO notification) {
         // Only send email for specific notification types or based on settings
-        if (emailNotificationsEnabled && isImportantNotification(notification)) {
+        if (emailNotificationsEnabled) {
             try {
                 Notification notificationEntity = notificationRepository.findById(notification.getId())
                         .orElseThrow(() -> new RuntimeException("Notification not found"));
@@ -50,9 +50,5 @@ public class EmailNotificationObserver implements NotificationObserver {
     @Override
     public void onNotificationDeleted(NotificationDTO notification) {
         // Usually no need to send emails for deleted notifications
-    }
-
-    private boolean isImportantNotification(NotificationDTO notification) {
-        return notification.getType() == NotificationType.SYSTEM;
     }
 }
