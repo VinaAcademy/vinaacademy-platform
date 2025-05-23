@@ -13,7 +13,7 @@ import org.springframework.retry.annotation.EnableRetry;
 public class AppConfig {
     public static AppConfig INSTANCE;
     @Getter
-    @Value("application.url.frontend:http://localhost:3000")
+    @Value("${application.url.frontend:http://localhost:3000}")
     private String frontendUrl;
 
     @PostConstruct

@@ -493,6 +493,9 @@ public class CourseServiceImpl implements CourseService {
         if (courseStatusRequest.getStatus() == null)
             throw BadRequestException.message("Thiếu dữ liệu cần thiết");
         course.setStatus(courseStatusRequest.getStatus());
+        if (course.getInstructors().isEmpty()) {
+            throw BadRequestException.message("Khóa học không có giảng viên");
+        }
         sendCourseNotification(course, course.getInstructors().get(0).getInstructor().getId());
         courseRepository.save(course);
         return true;
