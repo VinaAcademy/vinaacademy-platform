@@ -29,12 +29,12 @@ public class NotificationController {
 
     private final NotificationService notificationService;
     
-    @HasAnyRole({AuthConstants.ADMIN_ROLE, AuthConstants.STAFF_ROLE, AuthConstants.INSTRUCTOR_ROLE, AuthConstants.STUDENT_ROLE})
-    @PostMapping
-    public ApiResponse<NotificationDTO> createNotification(@RequestBody NotificationCreateDTO dto) {
-        log.debug("create notification for user with id {}", dto.getUserId());
-        return ApiResponse.success(notificationService.createNotification(dto));
-    }
+//    @HasAnyRole({AuthConstants.ADMIN_ROLE, AuthConstants.STAFF_ROLE, AuthConstants.INSTRUCTOR_ROLE, AuthConstants.STUDENT_ROLE})
+//    @PostMapping
+//    public ApiResponse<NotificationDTO> createNotification(@RequestBody NotificationCreateDTO dto) {
+//        log.debug("create notification for user with id {}", dto.getUserId());
+//        return ApiResponse.success(notificationService.createNotification(dto));
+//    }
     
     @HasAnyRole({AuthConstants.STUDENT_ROLE, AuthConstants.INSTRUCTOR_ROLE, AuthConstants.ADMIN_ROLE, AuthConstants.STAFF_ROLE})
     @Operation(summary = "Lấy thông báo", description = "Danh sách thông báo của student")

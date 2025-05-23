@@ -1,12 +1,11 @@
 package com.vinaacademy.platform.feature.course.service;
 
+import com.vinaacademy.platform.configuration.AppConfig;
 import com.vinaacademy.platform.exception.BadRequestException;
-import com.vinaacademy.platform.exception.RetryableException;
 import com.vinaacademy.platform.feature.category.Category;
 import com.vinaacademy.platform.feature.category.repository.CategoryRepository;
 import com.vinaacademy.platform.feature.category.service.CategoryService;
 import com.vinaacademy.platform.feature.common.helpers.SlugGeneratorHelper;
-import com.vinaacademy.platform.feature.common.utils.RandomUtils;
 import com.vinaacademy.platform.feature.common.utils.SlugUtils;
 import com.vinaacademy.platform.feature.course.dto.CourseCountStatusDto;
 import com.vinaacademy.platform.feature.course.dto.CourseDetailsResponse;
@@ -27,12 +26,13 @@ import com.vinaacademy.platform.feature.enrollment.repository.EnrollmentReposito
 import com.vinaacademy.platform.feature.instructor.CourseInstructor;
 import com.vinaacademy.platform.feature.instructor.repository.CourseInstructorRepository;
 import com.vinaacademy.platform.feature.lesson.dto.LessonDto;
-import com.vinaacademy.platform.feature.lesson.dto.LessonRequest;
 import com.vinaacademy.platform.feature.lesson.entity.Lesson;
 import com.vinaacademy.platform.feature.lesson.entity.UserProgress;
 import com.vinaacademy.platform.feature.lesson.mapper.LessonMapper;
-import com.vinaacademy.platform.feature.quiz.entity.Quiz;
-import com.vinaacademy.platform.feature.reading.Reading;
+import com.vinaacademy.platform.feature.notification.dto.NotificationCreateDTO;
+import com.vinaacademy.platform.feature.notification.dto.NotificationDTO;
+import com.vinaacademy.platform.feature.notification.enums.NotificationType;
+import com.vinaacademy.platform.feature.notification.service.NotificationService;
 import com.vinaacademy.platform.feature.review.dto.CourseReviewDto;
 import com.vinaacademy.platform.feature.review.mapper.CourseReviewMapper;
 import com.vinaacademy.platform.feature.section.dto.SectionDto;
@@ -41,13 +41,9 @@ import com.vinaacademy.platform.feature.section.mapper.SectionMapper;
 import com.vinaacademy.platform.feature.section.repository.SectionRepository;
 import com.vinaacademy.platform.feature.user.UserMapper;
 import com.vinaacademy.platform.feature.user.UserRepository;
-import com.vinaacademy.platform.feature.user.auth.annotation.RequiresResourcePermission;
 import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
 import com.vinaacademy.platform.feature.user.constant.AuthConstants;
-import com.vinaacademy.platform.feature.user.constant.ResourceConstants;
 import com.vinaacademy.platform.feature.user.entity.User;
-import com.vinaacademy.platform.feature.video.entity.Video;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -56,11 +52,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -96,6 +90,9 @@ public class CourseServiceImpl implements CourseService {
     private SecurityHelper securityHelper;
     @Autowired
     private SlugGeneratorHelper slugGeneratorHelper;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Override
     public Boolean isInstructorOfCourse(UUID courseId, UUID instructorId) {
@@ -280,12 +277,12 @@ public class CourseServiceImpl implements CourseService {
         }
         User currentUser = securityHelper.getCurrentUser();
         if (!securityHelper.hasAnyRole(AuthConstants.ADMIN_ROLE, AuthConstants.STAFF_ROLE, AuthConstants.INSTRUCTOR_ROLE)
-                ) {
+        ) {
             throw BadRequestException.message("Người dùng không có quyền xóa khóa học này");
         }
         if (course.getInstructors().stream()
-                .noneMatch(courseInstructor -> courseInstructor.getInstructor().equals(currentUser))){
-        	throw BadRequestException.message("Người dùng không phải chủ sở hữu khóa học này");
+                .noneMatch(courseInstructor -> courseInstructor.getInstructor().equals(currentUser))) {
+            throw BadRequestException.message("Người dùng không phải chủ sở hữu khóa học này");
         }
 
         courseRepository.delete(course);
@@ -496,8 +493,28 @@ public class CourseServiceImpl implements CourseService {
         if (courseStatusRequest.getStatus() == null)
             throw BadRequestException.message("Thiếu dữ liệu cần thiết");
         course.setStatus(courseStatusRequest.getStatus());
+        sendCourseNotification(course, course.getInstructors().get(0).getInstructor().getId());
         courseRepository.save(course);
         return true;
+    }
+
+    private void sendCourseNotification(Course course, UUID userId) {
+        String title = String.format("Khóa học %s đã được cập nhật trạng thái", course.getName());
+        String message = String.format("Khóa học %s đã được cập nhật trạng thái thành %s",
+                course.getName(), course.getStatus().getValue());
+        String url = String.format("%s%s%s%s",
+                AppConfig.INSTANCE.getFrontendUrl(),
+                "/instructor/courses/",
+                course.getId(),
+                "/content");
+        NotificationCreateDTO request = NotificationCreateDTO.builder()
+                .title(title)
+                .content(message)
+                .targetUrl(url)
+                .userId(userId)
+                .type(NotificationType.COURSE_APPROVAL)
+                .build();
+        notificationService.createNotification(request);
     }
 
     @Override
