@@ -34,7 +34,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     @Modifying
     @Transactional
     @Query("UPDATE Notification n SET n.isRead = true, n.readAt = CURRENT_TIMESTAMP WHERE " +
-            "n.id IN :notifcations AND n.isRead = false")
+            "n.id IN :notifications AND n.isRead = false")
     int markRead(List<Notification> notifications);
 
 }
