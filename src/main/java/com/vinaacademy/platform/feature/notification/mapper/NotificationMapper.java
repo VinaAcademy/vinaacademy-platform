@@ -15,9 +15,8 @@ public interface NotificationMapper {
     
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "isRead", ignore = true)
     @Mapping(target = "readAt", ignore = true)
-    @Mapping(target = "user", ignore = true) 
+    @Mapping(target = "user", ignore = true)
     Notification toEntity(NotificationCreateDTO dto); 
 }

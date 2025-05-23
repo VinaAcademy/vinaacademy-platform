@@ -60,6 +60,9 @@ application:
   url:
     frontend: ${FRONTEND_URL:http://localhost:3000}
     google-auth: ${application.url.frontend}/login/google
+  notifications:
+    email:
+      enabled: true
 
 server:
   port: 8080
