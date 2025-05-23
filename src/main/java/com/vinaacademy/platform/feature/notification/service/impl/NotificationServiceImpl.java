@@ -111,12 +111,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public void markReadAll() {
         User user = findUser();
-        asyncMarkAndNotify(user);
-    }
-
-    @Async  // Use Spring’s built-in thread pool
-    @Transactional
-    public void asyncMarkAndNotify(User user) {
         List<Notification> unreadNotis = notificationRepository.findByIsReadAndUser(false, user);
 
         if (unreadNotis.isEmpty()) return;
