@@ -1,4 +1,4 @@
-package com.vinaacademy.platform.feature.notification.service;
+package com.vinaacademy.platform.feature.notification.service.impl;
 
 import com.vinaacademy.platform.exception.BadRequestException;
 import com.vinaacademy.platform.exception.UnauthorizedException;
@@ -10,6 +10,7 @@ import com.vinaacademy.platform.feature.notification.mapper.NotificationMapper;
 import com.vinaacademy.platform.feature.notification.observer.NotificationAction;
 import com.vinaacademy.platform.feature.notification.observer.NotificationPublisher;
 import com.vinaacademy.platform.feature.notification.repository.NotificationRepository;
+import com.vinaacademy.platform.feature.notification.service.NotificationService;
 import com.vinaacademy.platform.feature.user.UserRepository;
 import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
 import com.vinaacademy.platform.feature.user.entity.User;
@@ -23,8 +24,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 @Service
 @RequiredArgsConstructor
