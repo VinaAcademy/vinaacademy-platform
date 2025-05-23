@@ -95,7 +95,7 @@ public class NotificationServiceImpl implements NotificationService {
         User user = findUser();
         if (!notification.getUser().getId().equals(user.getId()))
             throw UnauthorizedException.message("Xác thực thất bại vui lòng kiểm tra lại");
-        notificationRepository.save(notification);
+        notificationRepository.delete(notification); // Perform hard deletion
 
         notificationPublisher.notifyObservers(NotificationMapper.INSTANCE.toDTO(notification),
                 NotificationAction.DELETE);
