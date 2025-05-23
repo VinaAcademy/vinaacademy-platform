@@ -1,9 +1,12 @@
 package com.vinaacademy.platform.feature.notification.entity;
 
+import com.vinaacademy.platform.feature.common.entity.SoftDeleteEntity;
 import com.vinaacademy.platform.feature.notification.enums.NotificationType;
 import com.vinaacademy.platform.feature.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SoftDelete;
+import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -16,7 +19,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table(name = "notifications")
-public class Notification {
+public class Notification extends SoftDeleteEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
@@ -27,9 +30,6 @@ public class Notification {
 	
 	@Column(name = "content")
 	private String content;
-	
-	@Column(name = "is_deleted", nullable = false)
-	private Boolean isDeleted;
 	
 	@Column(name = "is_read", nullable = false)
 	private Boolean isRead;

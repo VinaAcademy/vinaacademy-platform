@@ -72,6 +72,9 @@ application:
     frontend: http://localhost:3000
     backend: http://localhost:8080
     google-auth: ${application.url.frontend}/login/google
+  notifications:
+    email:
+      enabled: true
 logging:
   level:
     root: INFO
