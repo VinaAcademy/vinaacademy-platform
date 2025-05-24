@@ -9,6 +9,7 @@ import com.vinaacademy.platform.feature.notification.enums.NotificationType;
 import com.vinaacademy.platform.feature.notification.mapper.NotificationMapper;
 import com.vinaacademy.platform.feature.notification.observer.NotificationAction;
 import com.vinaacademy.platform.feature.notification.observer.NotificationPublisher;
+import com.vinaacademy.platform.feature.notification.observer.NotificationSubject;
 import com.vinaacademy.platform.feature.notification.repository.NotificationRepository;
 import com.vinaacademy.platform.feature.notification.service.NotificationService;
 import com.vinaacademy.platform.feature.user.UserRepository;
@@ -33,7 +34,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserRepository userRepository;
     private final SecurityHelper securityHelper;
 
-    private final NotificationPublisher notificationPublisher;
+    private final NotificationSubject notificationPublisher;
 
     @Override
     public NotificationDTO createNotification(NotificationCreateDTO dto) {
