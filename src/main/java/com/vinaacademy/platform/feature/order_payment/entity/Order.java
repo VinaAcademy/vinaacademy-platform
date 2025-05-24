@@ -1,6 +1,8 @@
 package com.vinaacademy.platform.feature.order_payment.entity;
 
 import com.vinaacademy.platform.feature.common.entity.BaseEntity;
+import com.vinaacademy.platform.feature.order_payment.discount.DiscountStrategy;
+import com.vinaacademy.platform.feature.order_payment.discount.DiscountStrategyFactory;
 import com.vinaacademy.platform.feature.order_payment.enums.DiscountType;
 import com.vinaacademy.platform.feature.order_payment.enums.OrderStatus;
 import com.vinaacademy.platform.feature.order_payment.utils.Utils;
@@ -80,21 +82,8 @@ public class Order extends BaseEntity {
             if (coupon.getMinOrderValue() != null && this.subTotal.compareTo(coupon.getMinOrderValue()) < 0) {
                 this.discountAmount = BigDecimal.ZERO;
             } else {
-                if (coupon.getDiscountType() == DiscountType.PERCENTAGE) {
-                    this.discountAmount = this.subTotal.multiply(
-                        coupon.getDiscountValue().divide(new BigDecimal("100")));
-                    
-                    if (coupon.getMaxDiscountAmount() != null && 
-                        this.discountAmount.compareTo(coupon.getMaxDiscountAmount()) > 0) {
-                        this.discountAmount = coupon.getMaxDiscountAmount();
-                    }
-                } else {
-                    this.discountAmount = coupon.getDiscountValue();
-                    
-                    if (this.discountAmount.compareTo(this.subTotal) > 0) {
-                        this.discountAmount = this.subTotal;
-                    }
-                }
+            	DiscountStrategy strategy = DiscountStrategyFactory.getStrategy(coupon.getDiscountType());
+                this.discountAmount = strategy.calculateDiscount(this.subTotal, coupon);
             }
         } else 
             this.discountAmount = BigDecimal.ZERO;
