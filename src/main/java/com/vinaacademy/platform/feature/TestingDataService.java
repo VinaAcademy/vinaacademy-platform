@@ -426,8 +426,8 @@ public class TestingDataService {
                 }
 
                 // Parse price - default to 0 if not present or invalid
-                int randomInteger = (int) (Math.random() * 101);
-                randomInteger = randomInteger < 20 ? 0 : randomInteger * 1000;
+                int randomInteger = (int) (Math.random() * 1000);
+                randomInteger = randomInteger < 5 ? 0 : randomInteger * 1000;
                 BigDecimal price = BigDecimal.valueOf(randomInteger);
 
                 // Parse level - default to BEGINNER
