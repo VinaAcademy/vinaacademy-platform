@@ -47,7 +47,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @CacheEvict(value = CacheConstants.CATEGORIES, allEntries = true)
-    @Cacheable(value = CacheConstants.CATEGORY, key = "#result.slug")
+    @CachePut(value = CacheConstants.CATEGORY, key = "#result.slug")
     public CategoryDto createCategory(CategoryRequest request) {
         String slug = StringUtils.isBlank(request.getSlug())
                 ? request.getSlug() : SlugUtils.toSlug(request.getName());
