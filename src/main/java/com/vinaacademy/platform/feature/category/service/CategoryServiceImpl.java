@@ -1,5 +1,7 @@
 package com.vinaacademy.platform.feature.category.service;
 
+import com.vinaacademy.platform.configuration.cache.CacheConstants;
+import com.vinaacademy.platform.configuration.cache.CacheName;
 import com.vinaacademy.platform.exception.BadRequestException;
 import com.vinaacademy.platform.feature.category.Category;
 import com.vinaacademy.platform.feature.category.dto.CategoryDto;
@@ -10,6 +12,10 @@ import com.vinaacademy.platform.feature.category.utils.CategoryUtils;
 import com.vinaacademy.platform.feature.common.utils.SlugUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +27,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryMapper categoryMapper;
 
     @Override
+    @Cacheable(value = CacheConstants.CATEGORIES)
     public List<CategoryDto> getCategories() {
         // Root categories
         List<Category> categories = categoryRepository.findAllRootCategoriesWithChildren();
@@ -31,6 +38,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable(value = CacheConstants.CATEGORY, key = "#slug")
     public CategoryDto getCategory(String slug) {
         Category category = categoryRepository.findBySlug(slug)
                 .orElseThrow(() -> BadRequestException.message("Danh mục không tồn tại"));
@@ -39,6 +47,8 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @CacheEvict(value = CacheConstants.CATEGORIES, allEntries = true)
+    @Cacheable(value = CacheConstants.CATEGORY, key = "#request.slug")
     public CategoryDto createCategory(CategoryRequest request) {
         String slug = StringUtils.isBlank(request.getSlug())
                 ? request.getSlug() : SlugUtils.toSlug(request.getName());
@@ -65,6 +75,8 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @CacheEvict(value = CacheConstants.CATEGORIES, allEntries = true)
+    @CachePut(value = CacheConstants.CATEGORY, key = "#slug")
     public CategoryDto updateCategory(String slug, CategoryRequest request) {
         Category category = categoryRepository.findBySlug(slug)
                 .orElseThrow(() -> BadRequestException.message("Danh mục không tồn tại"));
@@ -97,6 +109,10 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = CacheConstants.CATEGORIES, allEntries = true),
+            @CacheEvict(value = CacheConstants.CATEGORY, key = "#slug")
+    })
     public void deleteCategory(String slug) {
         Category category = categoryRepository.findBySlug(slug)
                 .orElseThrow(() -> BadRequestException.message("Danh mục không tồn tại"));
