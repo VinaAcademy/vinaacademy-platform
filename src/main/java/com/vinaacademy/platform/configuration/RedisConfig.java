@@ -62,7 +62,7 @@ public class RedisConfig {
     }
 
     @Bean
-    @ConditionalOnBean(RedisConnectionFactory.class)
+//    @ConditionalOnBean(RedisConnectionFactory.class)
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);

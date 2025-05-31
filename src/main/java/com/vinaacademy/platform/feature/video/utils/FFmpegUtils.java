@@ -8,22 +8,23 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
 public class FFmpegUtils {
+
+    private static final List<VideoVariant> variants = Arrays.asList(
+            new VideoVariant("480p", "854x480", "800k", "96k"),
+            new VideoVariant("720p", "1280x720", "1500k", "128k"),
+            new VideoVariant("1080p", "1920x1080", "3000k", "192k")
+    );
 
     public static int convertToAdaptiveHLS(Path inputFilePath, Path outputBaseDir, Path thumbnailFilePath) throws IOException, InterruptedException {
         if (Files.exists(outputBaseDir)) {
             deleteDirectoryRecursively(outputBaseDir);
         }
         Files.createDirectories(outputBaseDir);
-
-        List<VideoVariant> variants = Arrays.asList(
-                new VideoVariant("480p", "854x480", "800k", "96k"),
-                new VideoVariant("720p", "1280x720", "1500k", "128k"),
-                new VideoVariant("1080p", "1920x1080", "3000k", "192k")
-        );
 
         StringBuilder masterPlaylistBuilder = new StringBuilder();
 
@@ -134,7 +135,7 @@ public class FFmpegUtils {
     public static void deleteDirectoryRecursively(Path path) throws IOException {
         if (Files.exists(path)) {
             Files.walk(path)
-                    .sorted((a, b) -> b.compareTo(a))
+                    .sorted(Comparator.reverseOrder())
                     .forEach(p -> {
                         try {
                             Files.delete(p);
@@ -145,7 +146,7 @@ public class FFmpegUtils {
         }
     }
 
-    private record VideoVariant(String name, String resolution, String videoBitrate, String audioBitrate) {
+    public record VideoVariant(String name, String resolution, String videoBitrate, String audioBitrate) {
         public int getBandwidthEstimate() {
             // Rough estimate for bandwidth
             int videoKbps = Integer.parseInt(videoBitrate.replace("k", ""));
