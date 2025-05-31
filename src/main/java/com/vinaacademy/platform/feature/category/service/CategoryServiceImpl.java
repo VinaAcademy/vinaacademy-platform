@@ -75,8 +75,15 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    @CacheEvict(value = CacheConstants.CATEGORIES, allEntries = true)
-    @CachePut(value = CacheConstants.CATEGORY, key = "#slug")
+    @Caching(
+            evict = {
+                    @CacheEvict(value = CacheConstants.CATEGORIES, allEntries = true),
+                    @CacheEvict(value = CacheConstants.CATEGORY, key = "#slug")
+            },
+            put = {
+                    @CachePut(value = CacheConstants.CATEGORY, key = "#slug")
+            }
+    )
     public CategoryDto updateCategory(String slug, CategoryRequest request) {
         Category category = categoryRepository.findBySlug(slug)
                 .orElseThrow(() -> BadRequestException.message("Danh mục không tồn tại"));
