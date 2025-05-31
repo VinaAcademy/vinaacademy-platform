@@ -1,7 +1,6 @@
 package com.vinaacademy.platform.feature.category.service;
 
 import com.vinaacademy.platform.configuration.cache.CacheConstants;
-import com.vinaacademy.platform.configuration.cache.CacheName;
 import com.vinaacademy.platform.exception.BadRequestException;
 import com.vinaacademy.platform.feature.category.Category;
 import com.vinaacademy.platform.feature.category.dto.CategoryDto;
