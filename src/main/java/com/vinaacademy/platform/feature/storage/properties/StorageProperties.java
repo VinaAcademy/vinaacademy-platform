@@ -8,10 +8,12 @@ import org.springframework.stereotype.Component;
 @Component
 @Getter
 public class StorageProperties {
-    @Value("${application.storage.uploadDir}")
+    @Value("${application.storage.uploadDir:${user.home}/uploads}")
     private String uploadDir;
-    @Value("${application.storage.hlsOutputDir}")
+    @Value("${application.storage.hlsOutputDir:${application.storage.uploadDir}/hls}")
     private String hlsDir;
+    @Value("${application.storage.tempDir:${application.storage.uploadDir}/temp}")
+    private String tempDir;
     private String videoDir;
     private String imageDir;
     private String thumbnailDir;
