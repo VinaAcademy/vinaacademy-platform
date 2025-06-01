@@ -1,8 +1,10 @@
 package com.vinaacademy.platform.feature.storage.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -11,6 +13,8 @@ import java.util.UUID;
 @Builder
 @Entity
 @Table(name = "upload_sessions")
+@NoArgsConstructor
+@AllArgsConstructor
 public class UploadSession {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

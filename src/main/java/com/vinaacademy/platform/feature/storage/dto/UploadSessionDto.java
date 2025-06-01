@@ -1,12 +1,17 @@
 package com.vinaacademy.platform.feature.storage.dto;
 
 import com.vinaacademy.platform.feature.storage.entity.UploadSession;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UploadSessionDto implements UploadResult {
     private UUID sessionId;
     private String filename;
