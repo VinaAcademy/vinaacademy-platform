@@ -71,7 +71,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
                 .status(UploadSession.UploadStatus.INITIATED)
                 .uploadedChunks(0)
                 .chunkSize(request.getChunkSize())
-                .totalChunks(request.getChunkSize())
+                .totalChunks((int) Math.ceil((double) request.getFileSize() / request.getChunkSize()))
                 .userId(currentUser.getId())
                 .build();
         // 3. create temporary filepath
