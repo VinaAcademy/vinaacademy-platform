@@ -11,6 +11,7 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
       enabled: true
+      default-ttl: 3600
   jpa:
     properties:
       hibernate:
