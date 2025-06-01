@@ -154,9 +154,8 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
     }
 
     private boolean checkHashMatch(Path tempFilePath, String expectedHash) {
-        try {
-            byte[] fileBytes = Files.readAllBytes(tempFilePath);
-            String actualHash = DigestUtils.sha256Hex(fileBytes);
+        try (InputStream is = Files.newInputStream(tempFilePath)) {
+            String actualHash = DigestUtils.sha256Hex(is);
             return actualHash.equalsIgnoreCase(expectedHash);
         } catch (IOException e) {
             log.error("Failed to read temporary file for hash check: {}", e.getMessage());
