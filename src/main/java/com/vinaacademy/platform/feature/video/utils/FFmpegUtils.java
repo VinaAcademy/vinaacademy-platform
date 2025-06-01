@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Slf4j
 public class FFmpegUtils {
@@ -134,8 +135,8 @@ public class FFmpegUtils {
 
     public static void deleteDirectoryRecursively(Path path) throws IOException {
         if (Files.exists(path)) {
-            Files.walk(path)
-                    .sorted(Comparator.reverseOrder())
+            try (Stream<Path> walk = Files.walk(path)) {
+                walk.sorted(Comparator.reverseOrder())
                     .forEach(p -> {
                         try {
                             Files.delete(p);
@@ -143,6 +144,7 @@ public class FFmpegUtils {
                             log.error("Delete failed: {}", p, e);
                         }
                     });
+            }
         }
     }
 

@@ -37,7 +37,8 @@ public class VideoProcessorService {
     @Async("videoTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processVideo(UUID videoId, Path inputFile) {
-        Video video = getVideo(videoId);
+        Video video = videoRepository.findByIdWithLock(videoId)
+                .orElseThrow(() -> BadRequestException.message("Không tìm thấy video"));
         Path outputDir = Paths.get(storageProperties.getHlsDir(), videoId.toString());
         Path thumbnailPath = Paths.get(storageProperties.getThumbnailDir(), videoId + ".jpg");
 
