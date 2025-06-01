@@ -53,6 +53,10 @@ public abstract class Lesson extends BaseEntity {
     @JoinColumn(name = "author_id", nullable = false)
     protected User author;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @OneToMany(mappedBy = "lesson", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     protected List<UserProgress> progressList;
 

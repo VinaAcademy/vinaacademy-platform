@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 
-public class MediaFileDto {
+public class MediaFileDto implements UploadResult {
     private UUID id;
     private String userId;
     private String fileName;

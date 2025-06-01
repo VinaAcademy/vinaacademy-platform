@@ -59,7 +59,7 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     public VideoDto uploadVideo(MultipartFile file, VideoRequest videoRequest) throws IOException {
-        Video video = videoRepository.findById(videoRequest.getLessonId())
+        Video video = videoRepository.findByIdWithLock(videoRequest.getLessonId())
                 .orElseThrow(() -> BadRequestException.message("Không tìm thấy bài học"));
         videoValidator.validate(file);
 
