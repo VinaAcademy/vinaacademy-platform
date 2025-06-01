@@ -37,8 +37,6 @@ public class RedisConfig {
     @Value("${spring.data.redis.default-ttl:3600}")
     private long defaultTtl;
 
-    private final LettuceConnectionFactory connectionFactory;
-
     @Bean
     public RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
@@ -62,7 +60,6 @@ public class RedisConfig {
     }
 
     @Bean
-//    @ConditionalOnBean(RedisConnectionFactory.class)
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
