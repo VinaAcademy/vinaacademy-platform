@@ -30,7 +30,7 @@ public class MediaFile {
     @Column(name = "file_name", nullable = false)
     private String fileName;
 
-    @Column(name = "file_type")
+    @Column(name = "file_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private FileType fileType;
 
@@ -58,9 +58,6 @@ public class MediaFile {
 
     @Column(name = "file_hash")
     private String fileHash;
-
-    @Column(name = "temp_file_path")
-    private String tempFilePath;
 
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)

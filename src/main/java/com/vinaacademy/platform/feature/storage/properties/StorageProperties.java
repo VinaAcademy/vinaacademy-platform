@@ -1,5 +1,6 @@
 package com.vinaacademy.platform.feature.storage.properties;
 
+import com.vinaacademy.platform.feature.storage.enums.FileType;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,5 +26,14 @@ public class StorageProperties {
         imageDir = uploadDir + "/images";
         thumbnailDir = uploadDir + "/thumbnails";
         documentDir = uploadDir + "/documents";
+    }
+
+    public String getDirByType(FileType fileType) {
+        return switch (fileType) {
+            case VIDEO -> videoDir;
+            case IMAGE -> imageDir;
+            case DOCUMENT -> documentDir;
+            default -> uploadDir; // Default to upload directory for unknown types
+        };
     }
 }

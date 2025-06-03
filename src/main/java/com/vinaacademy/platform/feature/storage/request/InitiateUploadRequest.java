@@ -1,5 +1,6 @@
 package com.vinaacademy.platform.feature.storage.request;
 
+import com.vinaacademy.platform.feature.storage.enums.FileType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -18,6 +19,8 @@ public class InitiateUploadRequest {
     @NotNull(message = "Kích thước tệp không được để trống")
     @Min(value = 1, message = "Kích thước tệp phải lớn hơn 0")
     private Long fileSize;
+    @NotNull(message = "Loại tệp không được để trống")
+    private FileType fileType;
     private String fileHash; // Optional: for resume detection
     @NotNull(message = "Kích thước phân đoạn không được để trống")
     @Min(value = 1, message = "Kích thước phân đoạn phải lớn hơn 0")

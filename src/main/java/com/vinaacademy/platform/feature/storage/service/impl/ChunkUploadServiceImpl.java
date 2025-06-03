@@ -69,6 +69,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
                 .fileName(request.getFilename())
                 .fileSize(request.getFileSize())
                 .fileHash(request.getFileHash())
+                .fileType(request.getFileType())
                 .status(MediaFile.UploadStatus.INITIATED)
                 .uploadedChunks(0)
                 .chunkSize(request.getChunkSize())
@@ -81,7 +82,6 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
             Files.createDirectories(tempDir);
             Path tempFilePath = tempDir.resolve(String.format("%s-%s", UUID.randomUUID()
                     , request.getFilename()));
-            uploadSession.setTempFilePath(tempFilePath.toString());
             uploadSession.setFilePath(tempFilePath.toString());
 
             // pre-allocate file space
@@ -121,7 +121,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
 
         // write chunk to temp file
         try {
-            Path tempFilePath = Paths.get(uploadSession.getTempFilePath());
+            Path tempFilePath = Paths.get(uploadSession.getFilePath());
             try (RandomAccessFile raf = new RandomAccessFile(tempFilePath.toFile(), "rw")) {
                 raf.seek((long) request.getChunkNumber() * uploadSession.getChunkSize());
                 raf.write(chunkFile.getBytes());
@@ -138,7 +138,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
             uploadSession.setStatus(MediaFile.UploadStatus.COMPLETED);
             // check hash match if provided
             if (StringUtils.isNotBlank(uploadSession.getFileHash())) {
-                boolean hashMatch = checkHashMatch(Paths.get(uploadSession.getTempFilePath()), uploadSession.getFileHash());
+                boolean hashMatch = checkHashMatch(Paths.get(uploadSession.getFilePath()), uploadSession.getFileHash());
                 if (!hashMatch) {
                     throw BadRequestException.message("Hash của tệp tải lên không khớp");
                 }
@@ -222,7 +222,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
 
         // 2. remove temporary files
         try {
-            Path path = Paths.get(uploadSession.getTempFilePath());
+            Path path = Paths.get(uploadSession.getFilePath());
             Files.deleteIfExists(path);
         } catch (IOException e) {
             log.warn("Failed to delete temporary file for upload session {}: {}", sessionId, e.getMessage());
