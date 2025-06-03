@@ -15,12 +15,13 @@ import com.vinaacademy.platform.feature.notification.service.NotificationService
 import com.vinaacademy.platform.feature.user.UserRepository;
 import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
 import com.vinaacademy.platform.feature.user.entity.User;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,6 +38,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationSubject notificationPublisher;
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public NotificationDTO createNotification(NotificationCreateDTO dto) {
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> BadRequestException.message("Không tìm thấy user"));

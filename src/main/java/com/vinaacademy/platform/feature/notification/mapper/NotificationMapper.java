@@ -11,12 +11,13 @@ import org.mapstruct.factory.Mappers;
 public interface NotificationMapper {
     NotificationMapper INSTANCE = Mappers.getMapper(NotificationMapper.class);
 
+    @Mapping(target = "email", source = "user.email")
     NotificationDTO toDTO(Notification notification);
-    
+
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "isRead", ignore = true)
     @Mapping(target = "readAt", ignore = true)
     @Mapping(target = "user", ignore = true)
-    Notification toEntity(NotificationCreateDTO dto); 
+    Notification toEntity(NotificationCreateDTO dto);
 }

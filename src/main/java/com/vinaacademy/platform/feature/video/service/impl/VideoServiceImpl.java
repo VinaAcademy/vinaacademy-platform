@@ -5,6 +5,7 @@ import com.vinaacademy.platform.feature.lesson.repository.LessonRepository;
 import com.vinaacademy.platform.feature.lesson.repository.projection.LessonAccessInfoDto;
 import com.vinaacademy.platform.feature.storage.dto.MediaFileDto;
 import com.vinaacademy.platform.feature.storage.enums.FileType;
+import com.vinaacademy.platform.feature.storage.repository.MediaFileRepository;
 import com.vinaacademy.platform.feature.storage.service.StorageService;
 import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
 import com.vinaacademy.platform.feature.user.constant.AuthConstants;
@@ -15,7 +16,6 @@ import com.vinaacademy.platform.feature.video.entity.Video;
 import com.vinaacademy.platform.feature.video.enums.VideoStatus;
 import com.vinaacademy.platform.feature.video.mapper.VideoMapper;
 import com.vinaacademy.platform.feature.video.repository.VideoRepository;
-import com.vinaacademy.platform.feature.video.service.VideoProcessorService;
 import com.vinaacademy.platform.feature.video.service.VideoService;
 import com.vinaacademy.platform.feature.video.validator.VideoValidator;
 import lombok.extern.slf4j.Slf4j;
@@ -44,12 +44,11 @@ public class VideoServiceImpl implements VideoService {
     @Autowired
     private VideoRepository videoRepository;
     @Autowired
-    private VideoProcessorService videoProcessorService;
+    private LessonRepository lessonRepository;
+    @Autowired
+    private VideoProcessorServiceImpl videoProcessorServiceImpl;
     @Autowired
     private StorageService storageService;
-
-    @Autowired
-    private LessonRepository lessonRepository;
 
     @Autowired
     private VideoValidator videoValidator;
@@ -87,7 +86,7 @@ public class VideoServiceImpl implements VideoService {
         video = videoRepository.save(video);
 
         // Xử lý FFmpeg async
-        videoProcessorService.processVideo(video.getId(), Paths.get(destinationFile));
+        videoProcessorServiceImpl.processVideo(video.getId(), Paths.get(destinationFile));
 
         return VideoMapper.INSTANCE.toDto(video);
     }

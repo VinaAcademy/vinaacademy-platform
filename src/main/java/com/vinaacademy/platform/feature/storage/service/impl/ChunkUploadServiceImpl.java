@@ -3,10 +3,10 @@ package com.vinaacademy.platform.feature.storage.service.impl;
 import com.vinaacademy.platform.exception.BadRequestException;
 import com.vinaacademy.platform.feature.storage.dto.UploadResult;
 import com.vinaacademy.platform.feature.storage.dto.UploadSessionDto;
-import com.vinaacademy.platform.feature.storage.entity.UploadSession;
+import com.vinaacademy.platform.feature.storage.entity.MediaFile;
 import com.vinaacademy.platform.feature.storage.mapper.UploadSessionMapper;
 import com.vinaacademy.platform.feature.storage.properties.StorageProperties;
-import com.vinaacademy.platform.feature.storage.repository.UploadSessionRepository;
+import com.vinaacademy.platform.feature.storage.repository.MediaFileRepository;
 import com.vinaacademy.platform.feature.storage.request.ChunkUploadRequest;
 import com.vinaacademy.platform.feature.storage.request.InitiateUploadRequest;
 import com.vinaacademy.platform.feature.storage.service.ChunkUploadService;
@@ -37,7 +37,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ChunkUploadServiceImpl implements ChunkUploadService {
-    private final UploadSessionRepository uploadSessionRepository;
+    private final MediaFileRepository mediaFileRepository;
 
     @Value("${application.upload.chunk.default-size:1048576}") // Default 1MB
     private long defaultChunkSize;
@@ -55,9 +55,9 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
 
         // 1. resume by file hash and user active session
         if (StringUtils.isNotBlank(request.getFileHash())) {
-            Optional<UploadSession> existingSessionOpt = uploadSessionRepository
+            Optional<MediaFile> existingSessionOpt = mediaFileRepository
                     .findByFileHashAndUserIdAndStatus(request.getFileHash(), currentUser.getId(),
-                            UploadSession.UploadStatus.IN_PROGRESS);
+                            MediaFile.UploadStatus.IN_PROGRESS);
 
             if (existingSessionOpt.isPresent()) {
                 log.info("Resuming existing upload session for file hash: {}", request.getFileHash());
@@ -65,11 +65,11 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
             }
         }
         // 2. create new session
-        UploadSession uploadSession = UploadSession.builder()
+        MediaFile uploadSession = MediaFile.builder()
                 .fileName(request.getFilename())
                 .fileSize(request.getFileSize())
                 .fileHash(request.getFileHash())
-                .status(UploadSession.UploadStatus.INITIATED)
+                .status(MediaFile.UploadStatus.INITIATED)
                 .uploadedChunks(0)
                 .chunkSize(request.getChunkSize())
                 .totalChunks((int) Math.ceil((double) request.getFileSize() / request.getChunkSize()))
@@ -82,6 +82,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
             Path tempFilePath = tempDir.resolve(String.format("%s-%s", UUID.randomUUID()
                     , request.getFilename()));
             uploadSession.setTempFilePath(tempFilePath.toString());
+            uploadSession.setFilePath(tempFilePath.toString());
 
             // pre-allocate file space
             try (RandomAccessFile raf = new RandomAccessFile(tempFilePath.toFile(), "rw")) {
@@ -91,7 +92,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
             throw BadRequestException.message("Không thể tạo thư mục tạm thời cho tải lên: " + e.getMessage());
         }
 
-        uploadSession = uploadSessionRepository.save(uploadSession);
+        uploadSession = mediaFileRepository.save(uploadSession);
         log.info("Created new upload session: {}", uploadSession.getId());
 
         return UploadSessionMapper.INSTANCE.toDto(uploadSession);
@@ -101,18 +102,18 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
     @Transactional
     public UploadResult uploadChunk(MultipartFile chunkFile, ChunkUploadRequest request) {
         // validate
-        UploadSession uploadSession = uploadSessionRepository.findById(request.getSessionId())
+        MediaFile uploadSession = mediaFileRepository.findById(request.getSessionId())
                 .orElseThrow(() -> BadRequestException.message("Không tìm thấy phiên tải lên với ID: " + request.getSessionId()));
         User currentUser = securityHelper.getCurrentUser();
         if (uploadSession.getUserId() != null && !uploadSession.getUserId().equals(currentUser.getId())) {
             throw BadRequestException.message("Bạn không có quyền truy cập vào phiên tải lên này");
         }
-        if (uploadSession.getStatus() == UploadSession.UploadStatus.COMPLETED) {
+        if (uploadSession.getStatus() == MediaFile.UploadStatus.COMPLETED) {
             throw BadRequestException.message("Phiên tải lên đã hoàn thành");
         }
         if (uploadSession.getExpiresAt().isBefore(LocalDateTime.now())) {
-            uploadSession.setStatus(UploadSession.UploadStatus.EXPIRED);
-            uploadSessionRepository.save(uploadSession);
+            uploadSession.setStatus(MediaFile.UploadStatus.EXPIRED);
+            mediaFileRepository.save(uploadSession);
             throw BadRequestException.message("Phiên tải lên đã hết hạn");
         }
 
@@ -134,7 +135,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
         boolean isLastChunk = request.getChunkNumber() == uploadSession.getTotalChunks() - 1;
         uploadSession.setUploadedChunks(uploadSession.getUploadedChunks() + 1);
         if (isLastChunk) {
-            uploadSession.setStatus(UploadSession.UploadStatus.COMPLETED);
+            uploadSession.setStatus(MediaFile.UploadStatus.COMPLETED);
             // check hash match if provided
             if (StringUtils.isNotBlank(uploadSession.getFileHash())) {
                 boolean hashMatch = checkHashMatch(Paths.get(uploadSession.getTempFilePath()), uploadSession.getFileHash());
@@ -143,9 +144,9 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
                 }
             }
         } else {
-            uploadSession.setStatus(UploadSession.UploadStatus.IN_PROGRESS);
+            uploadSession.setStatus(MediaFile.UploadStatus.IN_PROGRESS);
         }
-        uploadSession = uploadSessionRepository.save(uploadSession);
+        uploadSession = mediaFileRepository.save(uploadSession);
 
         log.debug("Uploaded chunk {} for session {}. Total uploaded: {}/{}",
                 request.getChunkNumber(), uploadSession.getId(), uploadSession.getUploadedChunks(),
@@ -164,7 +165,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
         }
     }
 
-    private void validateChunk(MultipartFile chunkFile, Integer chunkNumber, UploadSession uploadSession) {
+    private void validateChunk(MultipartFile chunkFile, Integer chunkNumber, MediaFile uploadSession) {
         if (chunkNumber < 0 || chunkNumber >= uploadSession.getTotalChunks()) {
             throw BadRequestException.message("Số lượng chunk không hợp lệ: " + chunkNumber);
         }
@@ -188,7 +189,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
 
     @Override
     public UploadSessionDto getUploadStatus(UUID sessionId) {
-        UploadSession uploadSession = uploadSessionRepository.findById(sessionId)
+        MediaFile uploadSession = mediaFileRepository.findById(sessionId)
                 .orElseThrow(() ->
                         BadRequestException.message("Không tìm thấy phiên tải lên với ID: " + sessionId));
 
@@ -202,8 +203,8 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
     @Override
     public List<UploadSessionDto> getAllActiveSessions() {
         User currentUser = securityHelper.getCurrentUser();
-        List<UploadSession> activeSessions = uploadSessionRepository
-                .findByUserIdAndStatus(currentUser.getId(), UploadSession.UploadStatus.IN_PROGRESS);
+        List<MediaFile> activeSessions = mediaFileRepository
+                .findByUserIdAndStatus(currentUser.getId(), MediaFile.UploadStatus.IN_PROGRESS);
         return UploadSessionMapper.INSTANCE.toDtoList(activeSessions);
     }
 
@@ -211,7 +212,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
     @Transactional
     public void cancelUpload(UUID sessionId) {
         // 1. validate
-        UploadSession uploadSession = uploadSessionRepository.findById(sessionId)
+        MediaFile uploadSession = mediaFileRepository.findById(sessionId)
                 .orElseThrow(() -> BadRequestException.message("Không tìm thấy phiên tải lên với ID: " + sessionId));
 
         User currentUser = securityHelper.getCurrentUser();
@@ -228,7 +229,7 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
         }
 
         // 3. delete upload session
-        uploadSessionRepository.delete(uploadSession);
+        mediaFileRepository.delete(uploadSession);
         log.info("Upload session {} has been cancelled and deleted", sessionId);
     }
 }

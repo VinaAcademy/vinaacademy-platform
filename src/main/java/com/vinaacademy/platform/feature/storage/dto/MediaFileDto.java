@@ -17,11 +17,11 @@ import java.util.UUID;
 
 public class MediaFileDto implements UploadResult {
     private UUID id;
-    private String userId;
+    private UUID userId;
     private String fileName;
     private FileType fileType;
     private String mimeType;
-    private long size;
+    private long fileSize;
     @JsonIgnore
     private String filePath;
     private Resource fileResource;

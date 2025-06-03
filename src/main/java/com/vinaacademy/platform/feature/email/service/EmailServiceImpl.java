@@ -155,16 +155,16 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendNotificationEmail(User user, String title, String message, String actionUrl, String actionText) {
+    public void sendNotificationEmail(String email, String title, String message, String actionUrl, String actionText) {
         Context context = new Context(LocaleContextHolder.getLocale());
-        context.setVariable("userName", user.getFullName());
+        context.setVariable("userName", "bạn");
         context.setVariable("title", title);
         context.setVariable("message", message);
         context.setVariable("actionUrl", actionUrl);
         context.setVariable("actionText", actionText);
 
         String body = parseTemplateToXhtml(context, EmailTemplate.NOTIFICATION.getTemplateName());
-        sendEmail(user.getEmail(), title, body, true);
+        sendEmail(email, title, body, true);
     }
 
     @Override

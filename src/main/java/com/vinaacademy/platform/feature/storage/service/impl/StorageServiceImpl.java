@@ -47,10 +47,10 @@ public class StorageServiceImpl implements StorageService {
         MediaFile mediaFile = MediaFile.builder()
                 .fileName(file.getOriginalFilename())
                 .filePath(filePath.toString())
-                .size(file.getSize())
+                .fileSize(file.getSize())
                 .fileType(fileType)
                 .mimeType(file.getContentType())
-                .userId(userId)
+                .userId(UUID.fromString(userId))
                 .build();
         mediaFile = mediaFileRepository.save(mediaFile);
         return MediaFileMapper.INSTANCE.toDto(mediaFile);

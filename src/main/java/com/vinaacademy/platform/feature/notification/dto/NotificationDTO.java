@@ -22,4 +22,5 @@ public class NotificationDTO {
     private LocalDateTime readAt;
     private String targetUrl;
     private NotificationType type;
+    private String email;
 }

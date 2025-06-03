@@ -19,7 +19,6 @@ public class InitiateUploadRequest {
     @Min(value = 1, message = "Kích thước tệp phải lớn hơn 0")
     private Long fileSize;
     private String fileHash; // Optional: for resume detection
-    private UUID lessonId;
     @NotNull(message = "Kích thước phân đoạn không được để trống")
     @Min(value = 1, message = "Kích thước phân đoạn phải lớn hơn 0")
     private Integer chunkSize; // Default: 1MB

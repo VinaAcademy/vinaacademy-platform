@@ -1,6 +1,7 @@
 package com.vinaacademy.platform.feature.notification.observer;
 
 import com.vinaacademy.platform.feature.notification.dto.NotificationDTO;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,7 @@ public class NotificationPublisher implements NotificationSubject {
 
     @Override
     @Async("notificationExecutor")
+    @Transactional()
     public void notifyObservers(NotificationDTO notification, String action) {
         for (NotificationObserver observer : observers) {
             try {

@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 public class EmailNotificationObserver implements NotificationObserver {
 
     private final EmailService emailService;
-    private final NotificationRepository notificationRepository;
 
     @Value("${application.notifications.email.enabled:false}")
     private boolean emailNotificationsEnabled;
@@ -28,13 +27,10 @@ public class EmailNotificationObserver implements NotificationObserver {
         // Only send email for specific notification types or based on settings
         if (emailNotificationsEnabled) {
             try {
-                Notification notificationEntity = notificationRepository.findById(notification.getId())
-                        .orElseThrow(() -> new RuntimeException("Notification not found"));
-                User user = notificationEntity.getUser();
                 String emailContent = notification.getContent();
                 String subject = String.format("Thông báo mới: %s - VinaAcademy", notification.getTitle());
 
-                emailService.sendNotificationEmail(user, subject, emailContent,
+                emailService.sendNotificationEmail(notification.getEmail(), subject, emailContent,
                         notification.getTargetUrl(), "Xem thông báo");
             } catch (Exception e) {
                 log.error("Failed to send notification email", e);

@@ -1,13 +1,14 @@
 package com.vinaacademy.platform.feature.video;
 
 import com.vinaacademy.platform.feature.common.response.ApiResponse;
-import com.vinaacademy.platform.feature.lesson.service.LessonService;
+import com.vinaacademy.platform.feature.request.ProcessVideoRequest;
 import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
 import com.vinaacademy.platform.feature.user.auth.annotation.RequiresResourcePermission;
 import com.vinaacademy.platform.feature.user.constant.AuthConstants;
 import com.vinaacademy.platform.feature.user.constant.ResourceConstants;
 import com.vinaacademy.platform.feature.video.dto.VideoDto;
 import com.vinaacademy.platform.feature.video.dto.VideoRequest;
+import com.vinaacademy.platform.feature.video.service.VideoProcessorService;
 import com.vinaacademy.platform.feature.video.service.VideoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,7 +42,7 @@ import java.util.UUID;
 @Tag(name = "Videos", description = "Video management APIs")
 public class VideoController {
     private final VideoService videoService;
-    private final LessonService lessonService;
+    private final VideoProcessorService videoProcessorService;
 
     @Operation(summary = "Upload a video", description = "Upload a video file for a lesson")
     @ApiResponses(value = {
@@ -65,6 +66,26 @@ public class VideoController {
         return ApiResponse.success("Video uploaded successfully",
                 videoService.uploadVideo(file, videoRequest));
     }
+
+    @Operation(summary = "Process video", description = "Process a video file for a lesson")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Video processed successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Unauthorized access"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Video not found")
+    })
+    @PostMapping("/process")
+    @HasAnyRole({AuthConstants.ADMIN_ROLE, AuthConstants.INSTRUCTOR_ROLE})
+    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
+            idParam = "processVideoRequest.videoId",
+            permission = ResourceConstants.EDIT)
+    public ApiResponse<Void> processVideo(
+            @RequestBody @Valid ProcessVideoRequest processVideoRequest) {
+        log.debug("Processing video: {}", processVideoRequest.getVideoId());
+        videoProcessorService.processVideo(processVideoRequest);
+        return ApiResponse.success("Video processing started successfully");
+    }
+
 
     @Operation(summary = "Get video segment", description = "Get a video segment for streaming")
     @ApiResponses(value = {

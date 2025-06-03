@@ -16,7 +16,7 @@ public interface EmailService {
 
     void sendWelcomeEmail(User user);
     
-    void sendNotificationEmail(User user, String title, String message, String actionUrl, String actionText);
+    void sendNotificationEmail(String email, String title, String message, String actionUrl, String actionText);
     
     void sendPaymentSuccessEmail(User user, String orderId, String amount, String orderTime, String courseUrl);
     
