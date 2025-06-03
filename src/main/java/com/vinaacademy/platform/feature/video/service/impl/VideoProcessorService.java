@@ -10,7 +10,6 @@ import com.vinaacademy.platform.feature.storage.repository.MediaFileRepository;
 import com.vinaacademy.platform.feature.video.entity.Video;
 import com.vinaacademy.platform.feature.video.enums.VideoStatus;
 import com.vinaacademy.platform.feature.video.repository.VideoRepository;
-import com.vinaacademy.platform.feature.video.service.VideoProcessorService;
 import com.vinaacademy.platform.feature.video.utils.FFmpegUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +31,7 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class VideoProcessorServiceImpl implements VideoProcessorService {
+public class VideoProcessorService implements com.vinaacademy.platform.feature.video.service.VideoProcessorService {
 
     private final VideoRepository videoRepository;
     private final MediaFileRepository mediaFileRepository;
@@ -45,7 +44,7 @@ public class VideoProcessorServiceImpl implements VideoProcessorService {
 
     @Autowired
     @Lazy
-    private VideoProcessorService self;
+    private com.vinaacademy.platform.feature.video.service.VideoProcessorService self;
 
     @Async("videoTaskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)

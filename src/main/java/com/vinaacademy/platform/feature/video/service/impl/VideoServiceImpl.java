@@ -5,7 +5,6 @@ import com.vinaacademy.platform.feature.lesson.repository.LessonRepository;
 import com.vinaacademy.platform.feature.lesson.repository.projection.LessonAccessInfoDto;
 import com.vinaacademy.platform.feature.storage.dto.MediaFileDto;
 import com.vinaacademy.platform.feature.storage.enums.FileType;
-import com.vinaacademy.platform.feature.storage.repository.MediaFileRepository;
 import com.vinaacademy.platform.feature.storage.service.StorageService;
 import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
 import com.vinaacademy.platform.feature.user.constant.AuthConstants;
@@ -46,7 +45,7 @@ public class VideoServiceImpl implements VideoService {
     @Autowired
     private LessonRepository lessonRepository;
     @Autowired
-    private VideoProcessorServiceImpl videoProcessorServiceImpl;
+    private VideoProcessorService videoProcessorService;
     @Autowired
     private StorageService storageService;
 
@@ -86,7 +85,7 @@ public class VideoServiceImpl implements VideoService {
         video = videoRepository.save(video);
 
         // Xử lý FFmpeg async
-        videoProcessorServiceImpl.processVideo(video.getId(), Paths.get(destinationFile));
+        videoProcessorService.processVideo(video.getId(), Paths.get(destinationFile));
 
         return VideoMapper.INSTANCE.toDto(video);
     }
