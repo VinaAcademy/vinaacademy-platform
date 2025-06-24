@@ -12,8 +12,6 @@ import com.vinaacademy.platform.feature.quiz.repository.QuestionRepository;
 import com.vinaacademy.platform.feature.quiz.repository.QuizRepository;
 import com.vinaacademy.platform.feature.quiz.service.AnswerService;
 import com.vinaacademy.platform.feature.quiz.service.QuestionService;
-import com.vinaacademy.platform.feature.user.auth.annotation.RequiresResourcePermission;
-import com.vinaacademy.platform.feature.user.constant.ResourceConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,8 +29,8 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     @Transactional
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
-            permission = ResourceConstants.CREATE)
+//    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
+//            permission = ResourceConstants.CREATE)
     public QuestionDto createQuestion(UUID quizId, QuestionDto questionDto) {
         Quiz quiz = findQuizById(quizId);
 

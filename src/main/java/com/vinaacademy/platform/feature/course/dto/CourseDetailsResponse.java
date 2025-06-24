@@ -1,11 +1,11 @@
 package com.vinaacademy.platform.feature.course.dto;
 
+import com.vinaacademy.platform.client.dto.UserDto;
 import com.vinaacademy.platform.feature.common.dto.BaseDto;
 import com.vinaacademy.platform.feature.course.enums.CourseLevel;
 import com.vinaacademy.platform.feature.course.enums.CourseStatus;
 import com.vinaacademy.platform.feature.review.dto.CourseReviewDto;
 import com.vinaacademy.platform.feature.section.dto.SectionDto;
-import com.vinaacademy.platform.feature.user.dto.UserDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

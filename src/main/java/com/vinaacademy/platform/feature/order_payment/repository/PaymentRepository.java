@@ -16,13 +16,13 @@ import java.util.UUID;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
-	@Query("SELECT p FROM Payment p WHERE p.order.user.id = :userId")
+	@Query("SELECT p FROM Payment p WHERE p.order.userId = :userId")
 	List<Payment> findAllByUserId(@Param("userId") UUID userId);
 
-	@Query("SELECT p FROM Payment p WHERE p.order.user.id = :userId ORDER BY p.createdAt DESC")
+	@Query("SELECT p FROM Payment p WHERE p.order.userId = :userId ORDER BY p.createdAt DESC")
 	List<Payment> findAllByUserIdOrderByCreatedAtDesc(@Param("userId") UUID userId);
 
-	@Query("SELECT p FROM Payment p WHERE p.order.user.id = :userId AND p.paymentStatus = :status")
+	@Query("SELECT p FROM Payment p WHERE p.order.userId = :userId AND p.paymentStatus = :status")
 	List<Payment> findAllByUserIdAndPaymentStatus(@Param("userId") UUID userId, @Param("status") String status);
 	
 	Optional<Payment> findByTransactionId(String transactionId);

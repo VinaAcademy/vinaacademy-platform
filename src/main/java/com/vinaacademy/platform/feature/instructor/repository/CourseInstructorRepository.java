@@ -2,7 +2,6 @@ package com.vinaacademy.platform.feature.instructor.repository;
 
 import com.vinaacademy.platform.feature.course.entity.Course;
 import com.vinaacademy.platform.feature.instructor.CourseInstructor;
-import com.vinaacademy.platform.feature.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,24 +27,24 @@ public interface CourseInstructorRepository extends JpaRepository<CourseInstruct
      * @param instructorId ID của giảng viên
      * @return Danh sách ID của các khóa học
      */
-    @Query("SELECT ci.course.id FROM CourseInstructor ci WHERE ci.instructor.id = :instructorId")
+    @Query("SELECT ci.course.id FROM CourseInstructor ci WHERE ci.instructorId = :instructorId")
     List<UUID> findCourseIdsByInstructorId(@Param("instructorId") UUID instructorId);
     /**
-     * Find a course instructor by instructor and course
+     * Find a course instructorId by instructorId and course
      *
-     * @param instructor the instructor
+     * @param instructorId the instructorId
      * @param course the course
-     * @return the course instructor if found
+     * @return the course instructorId if found
      */
-    Optional<CourseInstructor> findByInstructorAndCourse(User instructor, Course course);
+    Optional<CourseInstructor> findByInstructorIdAndCourse(UUID instructorId, Course course);
 
     /**
-     * Find all course instructors by instructor
+     * Find all course instructors by instructorId
      *
-     * @param instructor the instructor
+     * @param instructorId the instructorId
      * @return list of course instructors
      */
-    List<CourseInstructor> findByInstructor(User instructor);
+    List<CourseInstructor> findByInstructorId(UUID instructorId);
 
     /**
      * Find all course instructors by course
@@ -79,10 +78,10 @@ public interface CourseInstructorRepository extends JpaRepository<CourseInstruct
      * @return true if the user is an instructor of the course
      */
     @Query("SELECT CASE WHEN COUNT(ci) > 0 THEN true ELSE false END FROM CourseInstructor ci " +
-           "WHERE ci.instructor.id = :instructorId AND ci.course.id = :courseId")
+           "WHERE ci.instructorId = :instructorId AND ci.course.id = :courseId")
     boolean existsByInstructorIdAndCourseId(@Param("instructorId") UUID instructorId, @Param("courseId") UUID courseId);
 
     boolean existsByCourseIdAndInstructorId(UUID courseId, UUID id);
     
-    Long countByInstructorAndIsOwnerTrue(User instructor);
+    Long countByInstructorIdAndIsOwnerTrue(UUID instructorId);
 }

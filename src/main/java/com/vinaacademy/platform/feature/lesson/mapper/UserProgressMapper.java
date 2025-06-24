@@ -11,8 +11,8 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserProgressMapper {
 
-    @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "userName", source = "user.fullName")
+    @Mapping(target = "userId", source = "userId")
+    @Mapping(target = "userName", ignore = true)
     @Mapping(target = "lessonId", source = "lesson.id")
     @Mapping(target = "lessonTitle", source = "lesson.title")
     @Mapping(target = "lastUpdated", source = "updatedDate")

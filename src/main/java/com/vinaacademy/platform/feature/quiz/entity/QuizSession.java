@@ -2,7 +2,6 @@ package com.vinaacademy.platform.feature.quiz.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vinaacademy.platform.feature.common.entity.BaseEntity;
-import com.vinaacademy.platform.feature.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -29,9 +28,8 @@ public class QuizSession extends BaseEntity {
     private Quiz quiz;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
@@ -47,7 +45,7 @@ public class QuizSession extends BaseEntity {
     @JoinColumn(name = "quiz_submission_id")
     private QuizSubmission quizSubmission;
 
-    public static QuizSession createNewSession(Quiz quiz, User user) {
+    public static QuizSession createNewSession(Quiz quiz, UUID userId) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime expiry = null;
 
@@ -58,7 +56,7 @@ public class QuizSession extends BaseEntity {
 
         return QuizSession.builder()
                 .quiz(quiz)
-                .user(user)
+                .userId(userId)
                 .startTime(now)
                 .active(true)
                 .expiryTime(expiry)

@@ -2,9 +2,10 @@ package com.vinaacademy.platform.feature.lesson.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.vinaacademy.platform.feature.common.entity.BaseEntity;
-import com.vinaacademy.platform.feature.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.UUID;
 
 @Data
 @Getter
@@ -21,10 +22,9 @@ public class UserProgress extends BaseEntity {
     @JsonIgnore
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false)
     @JsonIgnore
-    private User user;
+    private UUID userId;
 
     @ManyToOne
     @JoinColumn(name = "lesson_id", nullable = false)

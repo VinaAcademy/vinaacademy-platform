@@ -30,7 +30,6 @@ import com.vinaacademy.platform.feature.lesson.entity.Lesson;
 import com.vinaacademy.platform.feature.lesson.entity.UserProgress;
 import com.vinaacademy.platform.feature.lesson.mapper.LessonMapper;
 import com.vinaacademy.platform.feature.notification.dto.NotificationCreateDTO;
-import com.vinaacademy.platform.feature.notification.dto.NotificationDTO;
 import com.vinaacademy.platform.feature.notification.enums.NotificationType;
 import com.vinaacademy.platform.feature.notification.service.NotificationService;
 import com.vinaacademy.platform.feature.review.dto.CourseReviewDto;
@@ -39,11 +38,6 @@ import com.vinaacademy.platform.feature.section.dto.SectionDto;
 import com.vinaacademy.platform.feature.section.entity.Section;
 import com.vinaacademy.platform.feature.section.mapper.SectionMapper;
 import com.vinaacademy.platform.feature.section.repository.SectionRepository;
-import com.vinaacademy.platform.feature.user.UserMapper;
-import com.vinaacademy.platform.feature.user.UserRepository;
-import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
-import com.vinaacademy.platform.feature.user.entity.User;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -54,6 +48,8 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.vinaacademy.common.constant.AuthConstants;
+import vn.vinaacademy.common.security.SecurityContextHelper;
 
 import java.util.List;
 import java.util.Map;
@@ -85,24 +81,20 @@ public class CourseServiceImpl implements CourseService {
     @Autowired
     private LessonMapper lessonMapper;
     @Autowired
-    private UserRepository userRepository;
+    private SecurityContextHelper securityContextHelper;
     @Autowired
-    private SecurityHelper securityHelper;
-    @Autowired
-    private SlugGeneratorHelper slugGeneratorHelper;
-
-    @Autowired
+    private SlugGeneratorHelper slugGeneratorHelper;    @Autowired
     private NotificationService notificationService;
+    @Autowired
+    private com.vinaacademy.platform.client.service.UserService userService;
 
     @Override
     public Boolean isInstructorOfCourse(UUID courseId, UUID instructorId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> BadRequestException.message("Khóa học không tồn tại"));
-        User instructor = userRepository.findById(instructorId)
-                .orElseThrow(() -> BadRequestException.message("Giảng viên không tồn tại"));
 
         return course.getInstructors().stream()
-                .anyMatch(courseInstructor -> courseInstructor.getInstructor().equals(instructor));
+                .anyMatch(courseInstructor -> courseInstructor.getInstructorId().equals(instructorId));
     }
 
     @Override
@@ -127,17 +119,13 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> BadRequestException.message("Khóa học không tồn tại"));
 
         // Use CourseMapper to create the base course details
-        CourseDetailsResponse response = courseMapper.toCourseDetailsResponse(course);
-
-        // Fetch and set instructors
+        CourseDetailsResponse response = courseMapper.toCourseDetailsResponse(course);        // Fetch and set instructors
         List<CourseInstructor> courseInstructors = courseInstructorRepository.findByCourse(course);
         response.setInstructors(courseInstructors.stream()
-                .map(ci -> UserMapper.INSTANCE.toDto(ci.getInstructor()))
-                .toList());
-
-        // Find the owner instructor specifically
+                .map(ci -> userService.getUserById(ci.getInstructorId()))
+                .toList());        // Find the owner instructor specifically
         courseInstructorRepository.findByCourseAndIsOwnerTrue(course)
-                .ifPresent(owner -> response.setOwnerInstructor(UserMapper.INSTANCE.toDto(owner.getInstructor())));
+                .ifPresent(owner -> response.setOwnerInstructor(userService.getUserById(owner.getInstructorId())));
 
         // Process sections with lessons using the common method
         List<SectionDto> sectionDtos = processSectionsAndLessons(course.getSections());
@@ -174,17 +162,15 @@ public class CourseServiceImpl implements CourseService {
         Page<Course> coursePage = courseRepository.findAll(spec, pageable);
 
         return coursePage.map(course -> {
-            CourseDetailsResponse response = courseMapper.toCourseDetailsResponse(course);
-
-            // Set instructors
+            CourseDetailsResponse response = courseMapper.toCourseDetailsResponse(course);            // Set instructors
             List<CourseInstructor> courseInstructors = courseInstructorRepository.findByCourse(course);
             response.setInstructors(courseInstructors.stream()
-                    .map(ci -> UserMapper.INSTANCE.toDto(ci.getInstructor()))
+                    .map(ci -> userService.getUserById(ci.getInstructorId()))
                     .toList());
 
             // Set owner instructor
             courseInstructorRepository.findByCourseAndIsOwnerTrue(course)
-                    .ifPresent(owner -> response.setOwnerInstructor(UserMapper.INSTANCE.toDto(owner.getInstructor())));
+                    .ifPresent(owner -> response.setOwnerInstructor(userService.getUserById(owner.getInstructorId())));
 
             // Set sections and lessons
             List<SectionDto> sectionDtos = processSectionsAndLessons(course.getSections());
@@ -237,10 +223,10 @@ public class CourseServiceImpl implements CourseService {
     public CourseDto updateCourse(String slug, CourseRequest request) {
         Course course = courseRepository.findBySlug(slug)
                 .orElseThrow(() -> BadRequestException.message("Khóa học không tồn tại"));
-        User currentUser = securityHelper.getCurrentUser();
-        if (!securityHelper.hasAnyRole(AuthConstants.ADMIN_ROLE, AuthConstants.STAFF_ROLE)
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
+        if (!securityContextHelper.hasAnyRole(AuthConstants.ADMIN_ROLE, AuthConstants.STAFF_ROLE)
                 && course.getInstructors().stream()
-                .noneMatch(courseInstructor -> courseInstructor.getInstructor().equals(currentUser))) {
+                .noneMatch(courseInstructor -> courseInstructor.getInstructorId().equals(currentUserId))) {
             throw BadRequestException.message("Người dùng không có quyền sửa khóa học này");
         }
 
@@ -275,13 +261,13 @@ public class CourseServiceImpl implements CourseService {
         if (course.getTotalStudent() > 0) {
             throw BadRequestException.message("Khóa học đã có người đăng ký không thể xóa");
         }
-        User currentUser = securityHelper.getCurrentUser();
-        if (!securityHelper.hasAnyRole(AuthConstants.ADMIN_ROLE, AuthConstants.STAFF_ROLE, AuthConstants.INSTRUCTOR_ROLE)
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
+        if (!securityContextHelper.hasAnyRole(AuthConstants.ADMIN_ROLE, AuthConstants.STAFF_ROLE, AuthConstants.INSTRUCTOR_ROLE)
         ) {
             throw BadRequestException.message("Người dùng không có quyền xóa khóa học này");
         }
         if (course.getInstructors().stream()
-                .noneMatch(courseInstructor -> courseInstructor.getInstructor().equals(currentUser))) {
+                .noneMatch(courseInstructor -> courseInstructor.getInstructorId().equals(currentUserId))) {
             throw BadRequestException.message("Người dùng không phải chủ sở hữu khóa học này");
         }
 
@@ -331,15 +317,13 @@ public class CourseServiceImpl implements CourseService {
 
         Page<Course> coursePage = courseRepository.findAll(spec, pageable);
         return coursePage.map(courseMapper::toDTO);
-    }
-
-    @Override
+    }    @Override
     public Page<CourseDto> getCoursesByInstructor(UUID instructorId, int page, int size,
                                                   String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
 
-        User instructor = userRepository.findById(instructorId)
-                .orElseThrow(() -> BadRequestException.message("Không tìm thấy giảng viên"));
+        // Verify instructor exists
+        userService.getUserById(instructorId);
 
         Page<Course> coursePage = courseRepository.findByInstructorId(instructorId, pageable);
         return coursePage.map(courseMapper::toDTO);
@@ -382,14 +366,14 @@ public class CourseServiceImpl implements CourseService {
             throw BadRequestException.message("Khóa học chưa được công khai");
         }
 
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
         // enrollment progress
-        List<User> instructors = course.getInstructors().stream()
-                .map(CourseInstructor::getInstructor)
+        List<UUID> instructors = course.getInstructors().stream()
+                .map(CourseInstructor::getInstructorId)
                 .toList();
-        if (!securityHelper.hasAnyRole(AuthConstants.ADMIN_ROLE, AuthConstants.STAFF_ROLE)
-                && !instructors.contains(currentUser)) {
-            Enrollment courseEnrollment = enrollmentRepository.findByCourseAndUser(course, currentUser)
+        if (!securityContextHelper.hasAnyRole(AuthConstants.ADMIN_ROLE, AuthConstants.STAFF_ROLE)
+                && !instructors.contains(currentUserId)) {
+            Enrollment courseEnrollment = enrollmentRepository.findByCourseAndUserId(course, currentUserId)
                     .orElseThrow(() -> BadRequestException.message("Người dùng không có quyền truy cập khóa học này"));
             courseDto.setProgress(EnrollmentMapper.INSTANCE.toDto2(courseEnrollment));
         } else {
@@ -405,7 +389,7 @@ public class CourseServiceImpl implements CourseService {
                 .toList();
 
         // 2. Fetch all user progress records in a single query
-        List<UserProgress> allUserProgress = lessonProgressRepository.findByUserAndLessonIn(currentUser, allLessons);
+        List<UserProgress> allUserProgress = lessonProgressRepository.findByUserIdAndLessonIn(currentUserId, allLessons);
 
         // 3. Create a map for quick lookup: lessonId -> UserProgress
         Map<UUID, UserProgress> progressMap = allUserProgress.stream()
@@ -496,7 +480,7 @@ public class CourseServiceImpl implements CourseService {
         if (course.getInstructors().isEmpty()) {
             throw BadRequestException.message("Khóa học không có giảng viên");
         }
-        sendCourseNotification(course, course.getInstructors().get(0).getInstructor().getId());
+        sendCourseNotification(course, course.getInstructors().get(0).getInstructorId());
         courseRepository.save(course);
         return true;
     }
@@ -556,11 +540,8 @@ public class CourseServiceImpl implements CourseService {
             int size,
             String sortBy,
             String sortDirection) {
-        Pageable pageable = createPageable(page, size, sortBy, sortDirection);
-
-        // Kiểm tra user có phải là instructor không
-        User instructor = userRepository.findById(instructorId)
-                .orElseThrow(() -> BadRequestException.message("Không tìm thấy giảng viên"));
+        Pageable pageable = createPageable(page, size, sortBy, sortDirection);        // Kiểm tra user có phải là instructor không
+        com.vinaacademy.platform.client.dto.UserDto instructor = userService.getUserById(instructorId);
 
         // Kiểm tra xem user có role INSTRUCTOR không
         boolean isInstructor = instructor.getRoles().stream()

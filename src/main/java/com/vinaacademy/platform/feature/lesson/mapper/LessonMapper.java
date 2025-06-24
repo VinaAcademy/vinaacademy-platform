@@ -15,8 +15,8 @@ public interface LessonMapper {
 
     @Mapping(target = "sectionId", source = "section.id")
     @Mapping(target = "sectionTitle", source = "section.title")
-    @Mapping(target = "authorId", source = "author.id")
-    @Mapping(target = "authorName", source = "author.fullName")
+    @Mapping(target = "authorId", source = "authorId")
+    @Mapping(target = "authorName", ignore = true)
     @Mapping(target = "courseId", source = "section.course.id")
     @Mapping(target = "courseName", source = "section.course.name")
     @Mapping(target = "thumbnailUrl", ignore = true)
@@ -46,6 +46,7 @@ public interface LessonMapper {
 
     /**
      * Factory method to create the appropriate Lesson type based on the DTO
+     *
      * @param dto The LessonDto to convert
      * @return The concrete implementation of Lesson
      */
@@ -53,13 +54,13 @@ public interface LessonMapper {
         if (dto == null) {
             return null;
         }
-        
+
         LessonType type = dto.getType();
         if (type == null) {
             // Default to Reading if type is not specified
             type = LessonType.READING;
         }
-        
+
         switch (type) {
             case VIDEO:
                 return createVideo(dto);
@@ -70,7 +71,7 @@ public interface LessonMapper {
                 return createReading(dto);
         }
     }
-    
+
     /**
      * Creates a Video entity from LessonDto
      */
@@ -83,14 +84,14 @@ public interface LessonMapper {
                 .duration(dto.getVideoDuration())
                 .status(dto.getStatus())
                 .build();
-        
+
         if (dto.getId() != null) {
             video.setId(dto.getId());
         }
-        
+
         return video;
     }
-    
+
     /**
      * Creates a Reading entity from LessonDto
      */
@@ -101,14 +102,14 @@ public interface LessonMapper {
                 .orderIndex(dto.getOrderIndex())
                 .content(dto.getContent())
                 .build();
-        
+
         if (dto.getId() != null) {
             reading.setId(dto.getId());
         }
-        
+
         return reading;
     }
-    
+
     /**
      * Creates a Quiz entity from LessonDto
      */
@@ -121,11 +122,11 @@ public interface LessonMapper {
                 .totalPoints(dto.getTotalPoint())
                 .duration(dto.getDuration())
                 .build();
-        
+
         if (dto.getId() != null) {
             quiz.setId(dto.getId());
         }
-        
+
         return quiz;
     }
 }

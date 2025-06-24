@@ -14,7 +14,6 @@ import java.util.List;
 public interface CartMapper {
 
     @Mapping(source = "coupon.id", target = "couponId")
-    @Mapping(source = "user.id", target = "userId")
     CartDto toDTO(Cart cart);
 
    

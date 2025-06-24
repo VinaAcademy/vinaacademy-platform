@@ -7,8 +7,6 @@ import com.vinaacademy.platform.feature.cart.dto.CartRequest;
 import com.vinaacademy.platform.feature.cart.service.CartItemService;
 import com.vinaacademy.platform.feature.cart.service.CartService;
 import com.vinaacademy.platform.feature.common.response.ApiResponse;
-import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import vn.vinaacademy.common.constant.AuthConstants;
+import vn.vinaacademy.common.security.annotation.HasAnyRole;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,7 +33,7 @@ public class CartController {
     @Autowired
 	private CartItemService cartItemService;
 	
-	@HasAnyRole({AuthConstants.STUDENT_ROLE}) 
+	@HasAnyRole({AuthConstants.STUDENT_ROLE})
     @PostMapping
     @Operation(summary = "Tạo giỏ hàng mới", description = "Tạo giỏ hàng mới cho học viên")
     public ResponseEntity<ApiResponse<CartDto>> createCart(@RequestBody @Valid CartRequest request) {

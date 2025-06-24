@@ -6,9 +6,10 @@ import com.vinaacademy.platform.feature.lesson.entity.Lesson;
 import com.vinaacademy.platform.feature.reading.Reading;
 import com.vinaacademy.platform.feature.reading.repository.ReadingRepository;
 import com.vinaacademy.platform.feature.section.entity.Section;
-import com.vinaacademy.platform.feature.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 /**
  * Concrete creator for creating Reading lessons
@@ -20,13 +21,13 @@ public class ReadingLessonCreator extends LessonCreator {
     private final ReadingRepository readingRepository;
     
     @Override
-    public Lesson createLesson(String title, Section section, User author, boolean isFree, int orderIndex) {
+    public Lesson createLesson(String title, Section section, UUID authorId, boolean isFree, int orderIndex) {
         Reading reading = Reading.builder()
                 .title(title)
                 .section(section)
                 .free(isFree)
                 .orderIndex(orderIndex)
-                .author(author)
+                .authorId(authorId)
                 .content("")
                 .build();
         
@@ -34,7 +35,7 @@ public class ReadingLessonCreator extends LessonCreator {
     }
     
     @Override
-    public Lesson createLesson(LessonRequest request, Section section, User author) {
+    public Lesson createLesson(LessonRequest request, Section section, UUID authorId) {
         validateRequest(request);
         
         Reading reading = Reading.builder()
@@ -43,7 +44,7 @@ public class ReadingLessonCreator extends LessonCreator {
                 .section(section)
                 .free(request.isFree())
                 .orderIndex(request.getOrderIndex())
-                .author(author)
+                .authorId(authorId)
                 .content(request.getContent())
                 .build();
         

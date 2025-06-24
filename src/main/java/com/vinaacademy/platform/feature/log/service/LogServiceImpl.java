@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vinaacademy.platform.feature.common.utils.CommonUtils;
 import com.vinaacademy.platform.feature.log.constant.LogConstants;
-import com.vinaacademy.platform.feature.user.auth.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,7 @@ public class LogServiceImpl implements LogService {
     private final InternalLogService internalLogService;
     private final ObjectMapper objectMapper;
     private final HttpServletRequest request;
-    private final JwtService jwtService;
+//    private final JwtService jwtService;
 
     @Value("${app.enableLog:true}")
     private boolean isLogEnabled;
@@ -55,7 +54,7 @@ public class LogServiceImpl implements LogService {
             return map.get("username");
         }
         return Optional.ofNullable(CommonUtils.getJwtFromRequest(request))
-                .map(jwtService::extractUsername)
+//                .map(jwtService::extractUsername)
                 .orElse(null);
     }
 }

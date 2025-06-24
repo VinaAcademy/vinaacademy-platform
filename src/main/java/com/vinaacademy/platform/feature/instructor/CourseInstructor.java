@@ -2,9 +2,10 @@ package com.vinaacademy.platform.feature.instructor;
 
 import com.vinaacademy.platform.feature.common.entity.BaseEntity;
 import com.vinaacademy.platform.feature.course.entity.Course;
-import com.vinaacademy.platform.feature.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.UUID;
 
 @Data
 @Getter
@@ -21,9 +22,8 @@ public class CourseInstructor extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User instructor;
+    @Column(name = "user_id", nullable = false)
+    private UUID instructorId;
 
     @ManyToOne
     @JoinColumn(name = "course_id", nullable = false)

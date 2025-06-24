@@ -2,18 +2,13 @@ package com.vinaacademy.platform.feature.notification.entity;
 
 import com.vinaacademy.platform.feature.common.entity.SoftDeleteEntity;
 import com.vinaacademy.platform.feature.notification.enums.NotificationType;
-import com.vinaacademy.platform.feature.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.SoftDelete;
-import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
-@Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -36,10 +31,9 @@ public class Notification extends SoftDeleteEntity {
 	
 	@Column(name = "read_at", nullable = true)
 	private LocalDateTime readAt;
-	
-	@ManyToOne
-    @JoinColumn(name = "recipient")
-	private User user;
+
+    @Column(name = "recipient_id")
+	private UUID recipientId;
 	
 	@Column(name = "target_url")
 	private String targetUrl;

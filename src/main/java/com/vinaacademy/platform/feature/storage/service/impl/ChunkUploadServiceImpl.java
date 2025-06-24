@@ -10,8 +10,6 @@ import com.vinaacademy.platform.feature.storage.repository.MediaFileRepository;
 import com.vinaacademy.platform.feature.storage.request.ChunkUploadRequest;
 import com.vinaacademy.platform.feature.storage.request.InitiateUploadRequest;
 import com.vinaacademy.platform.feature.storage.service.ChunkUploadService;
-import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
-import com.vinaacademy.platform.feature.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -21,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import vn.vinaacademy.common.security.SecurityContextHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,18 +44,18 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
     private long maxChunkSize;
 
     @Autowired
-    private SecurityHelper securityHelper;
+    private SecurityContextHelper securityHelper;
     @Autowired
     private StorageProperties storageProperties;
 
     @Override
     public UploadSessionDto initiateUpload(InitiateUploadRequest request) {
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
 
         // 1. resume by file hash and user active session
         if (StringUtils.isNotBlank(request.getFileHash())) {
             Optional<MediaFile> existingSessionOpt = mediaFileRepository
-                    .findByFileHashAndUserIdAndStatus(request.getFileHash(), currentUser.getId(),
+                    .findByFileHashAndUserIdAndStatus(request.getFileHash(), currentUserId,
                             MediaFile.UploadStatus.IN_PROGRESS);
 
             if (existingSessionOpt.isPresent()) {
@@ -74,10 +73,10 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
                 .uploadedChunks(0)
                 .chunkSize(request.getChunkSize())
                 .totalChunks((int) Math.ceil((double) request.getFileSize() / request.getChunkSize()))
-                .userId(currentUser.getId())
+                .userId(currentUserId)
                 .build();
         // 3. create temporary filepath
-        Path tempDir = Paths.get(storageProperties.getTempDir(), currentUser.getId().toString());
+        Path tempDir = Paths.get(storageProperties.getTempDir(), currentUserId.toString());
         try {
             Files.createDirectories(tempDir);
             Path tempFilePath = tempDir.resolve(String.format("%s-%s", UUID.randomUUID()
@@ -104,8 +103,8 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
         // validate
         MediaFile uploadSession = mediaFileRepository.findById(request.getSessionId())
                 .orElseThrow(() -> BadRequestException.message("Không tìm thấy phiên tải lên với ID: " + request.getSessionId()));
-        User currentUser = securityHelper.getCurrentUser();
-        if (uploadSession.getUserId() != null && !uploadSession.getUserId().equals(currentUser.getId())) {
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
+        if (uploadSession.getUserId() != null && !uploadSession.getUserId().equals(currentUserId)) {
             throw BadRequestException.message("Bạn không có quyền truy cập vào phiên tải lên này");
         }
         if (uploadSession.getStatus() == MediaFile.UploadStatus.COMPLETED) {
@@ -193,8 +192,8 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
                 .orElseThrow(() ->
                         BadRequestException.message("Không tìm thấy phiên tải lên với ID: " + sessionId));
 
-        User currentUser = securityHelper.getCurrentUser();
-        if (uploadSession.getUserId() != null && !uploadSession.getUserId().equals(currentUser.getId())) {
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
+        if (uploadSession.getUserId() != null && !uploadSession.getUserId().equals(currentUserId)) {
             throw BadRequestException.message("Bạn không có quyền truy cập vào phiên tải lên này");
         }
         return UploadSessionMapper.INSTANCE.toDto(uploadSession);
@@ -202,9 +201,9 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
 
     @Override
     public List<UploadSessionDto> getAllActiveSessions() {
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
         List<MediaFile> activeSessions = mediaFileRepository
-                .findByUserIdAndStatus(currentUser.getId(), MediaFile.UploadStatus.IN_PROGRESS);
+                .findByUserIdAndStatus(currentUserId, MediaFile.UploadStatus.IN_PROGRESS);
         return UploadSessionMapper.INSTANCE.toDtoList(activeSessions);
     }
 
@@ -215,8 +214,8 @@ public class ChunkUploadServiceImpl implements ChunkUploadService {
         MediaFile uploadSession = mediaFileRepository.findById(sessionId)
                 .orElseThrow(() -> BadRequestException.message("Không tìm thấy phiên tải lên với ID: " + sessionId));
 
-        User currentUser = securityHelper.getCurrentUser();
-        if (uploadSession.getUserId() != null && !uploadSession.getUserId().equals(currentUser.getId())) {
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
+        if (uploadSession.getUserId() != null && !uploadSession.getUserId().equals(currentUserId)) {
             throw BadRequestException.message("Bạn không có quyền hủy phiên tải lên này");
         }
 

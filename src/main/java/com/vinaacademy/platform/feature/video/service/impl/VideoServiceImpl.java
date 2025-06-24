@@ -6,9 +6,7 @@ import com.vinaacademy.platform.feature.lesson.repository.projection.LessonAcces
 import com.vinaacademy.platform.feature.storage.dto.MediaFileDto;
 import com.vinaacademy.platform.feature.storage.enums.FileType;
 import com.vinaacademy.platform.feature.storage.service.StorageService;
-import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
-import com.vinaacademy.platform.feature.user.entity.User;
+import vn.vinaacademy.common.constant.AuthConstants;
 import com.vinaacademy.platform.feature.video.dto.VideoDto;
 import com.vinaacademy.platform.feature.video.dto.VideoRequest;
 import com.vinaacademy.platform.feature.video.entity.Video;
@@ -26,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import vn.vinaacademy.common.security.SecurityContextHelper;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -52,7 +51,7 @@ public class VideoServiceImpl implements VideoService {
     @Autowired
     private VideoValidator videoValidator;
     @Autowired
-    private SecurityHelper securityHelper;
+    private SecurityContextHelper securityHelper;
 
 
     @Override
@@ -61,11 +60,11 @@ public class VideoServiceImpl implements VideoService {
                 .orElseThrow(() -> BadRequestException.message("Không tìm thấy bài học"));
         videoValidator.validate(file);
 
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
 
         LessonAccessInfoDto lessonAccessInfo = lessonRepository
                 .getLessonAccessInfo(videoRequest.getLessonId(),
-                        currentUser.getId())
+                        currentUserId)
                 .orElseThrow(() -> BadRequestException.message("Không tìm thấy bài học"));
         if (!lessonAccessInfo.isInstructor() && !securityHelper.hasRole(AuthConstants.ADMIN_ROLE)) {
             throw BadRequestException.message("Bạn không có quyền truy cập vào video này");
@@ -76,11 +75,11 @@ public class VideoServiceImpl implements VideoService {
         video.setThumbnailUrl(videoRequest.getThumbnailUrl());
         video.setStatus(VideoStatus.PROCESSING);
         video.setDuration(0);
-        video.setAuthor(currentUser);
+        video.setAuthorId(currentUserId);
 
         // Tạo thư mục lưu video
         MediaFileDto mediaFile =
-                storageService.uploadFile(file, FileType.VIDEO, currentUser.getId().toString());
+                storageService.uploadFile(file, FileType.VIDEO, currentUserId.toString());
         String destinationFile = mediaFile.getFilePath();
         video = videoRepository.save(video);
 

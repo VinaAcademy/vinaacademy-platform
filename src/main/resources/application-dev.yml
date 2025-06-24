@@ -91,7 +91,6 @@ logging:
           nodeValue: TRACE
         SQL: DEBUG
 server:
-  port: 8080
   compression:
     enabled: true
     mime-types: application/x-mpegURL, text/plain

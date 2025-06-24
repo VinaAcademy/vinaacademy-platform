@@ -4,12 +4,12 @@ import com.vinaacademy.platform.feature.category.dto.CategoryDto;
 import com.vinaacademy.platform.feature.category.dto.CategoryRequest;
 import com.vinaacademy.platform.feature.category.service.CategoryService;
 import com.vinaacademy.platform.feature.common.response.ApiResponse;
-import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import vn.vinaacademy.common.constant.AuthConstants;
+import vn.vinaacademy.common.security.annotation.HasAnyRole;
 
 import java.util.List;
 

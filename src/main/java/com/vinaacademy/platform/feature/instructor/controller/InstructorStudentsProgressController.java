@@ -5,10 +5,6 @@ import com.vinaacademy.platform.feature.common.response.PaginationResponse;
 import com.vinaacademy.platform.feature.enrollment.dto.StudentProgressDto;
 import com.vinaacademy.platform.feature.enrollment.enums.ProgressStatus;
 import com.vinaacademy.platform.feature.enrollment.service.EnrollmentService;
-import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
-import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
-import com.vinaacademy.platform.feature.user.entity.User;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -20,6 +16,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
+import vn.vinaacademy.common.constant.AuthConstants;
+import vn.vinaacademy.common.security.SecurityContextHelper;
+import vn.vinaacademy.common.security.annotation.HasAnyRole;
 
 import java.util.UUID;
 
@@ -32,7 +31,7 @@ import java.util.UUID;
 public class InstructorStudentsProgressController {
 
     private final EnrollmentService enrollmentService;
-    private final SecurityHelper securityHelper;
+    private final SecurityContextHelper securityHelper;
 
     /**
      * Xem tiến độ học tập của học viên
@@ -53,8 +52,7 @@ public class InstructorStudentsProgressController {
                 courseId, search, status, page, size, sortBy, sortDirection);
 
         // Lấy thông tin người dùng hiện tại
-        User currentUser = securityHelper.getCurrentUser();
-        UUID instructorId = currentUser.getId();
+        UUID instructorId = securityHelper.getCurrentUserIdAsUUID();
 
         // Kiểm tra xem người dùng có phải là giảng viên không
         if (!enrollmentService.isInstructor(instructorId)) {
@@ -99,8 +97,7 @@ public class InstructorStudentsProgressController {
                 courseId, search, status, page, size, sortBy, sortDirection);
 
         // Lấy thông tin người dùng hiện tại
-        User currentUser = securityHelper.getCurrentUser();
-        UUID instructorId = currentUser.getId();
+        UUID instructorId = securityHelper.getCurrentUserIdAsUUID();
 
         // Kiểm tra xem người dùng có quyền xem khóa học này không
         if (!enrollmentService.isCourseOwnerByInstructor(courseId, instructorId)) {

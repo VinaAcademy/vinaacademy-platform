@@ -4,7 +4,6 @@ import com.vinaacademy.platform.feature.common.entity.BaseEntity;
 import com.vinaacademy.platform.feature.course.enums.LessonType;
 import com.vinaacademy.platform.feature.section.entity.Section;
 import com.vinaacademy.platform.feature.storage.entity.MediaFile;
-import com.vinaacademy.platform.feature.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -49,9 +48,8 @@ public abstract class Lesson extends BaseEntity {
     @Column(name = "order_index")
     protected int orderIndex;
 
-    @ManyToOne
-    @JoinColumn(name = "author_id", nullable = false)
-    protected User author;
+    @Column(name = "author_id", nullable = false)
+    protected UUID authorId;
 
     @Version
     @Column(name = "version")
