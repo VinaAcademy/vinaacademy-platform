@@ -2,9 +2,10 @@ package com.vinaacademy.platform.feature.review.entity;
 
 import com.vinaacademy.platform.feature.common.entity.BaseEntity;
 import com.vinaacademy.platform.feature.course.entity.Course;
-import com.vinaacademy.platform.feature.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.UUID;
 
 @Data
 @Getter
@@ -30,7 +31,6 @@ public class CourseReview extends BaseEntity {
     @Column(name = "review", columnDefinition = "TEXT")
     private String review;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 }

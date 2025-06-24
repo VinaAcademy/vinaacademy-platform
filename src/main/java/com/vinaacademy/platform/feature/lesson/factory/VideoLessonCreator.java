@@ -4,12 +4,13 @@ import com.vinaacademy.platform.exception.ValidationException;
 import com.vinaacademy.platform.feature.lesson.dto.LessonRequest;
 import com.vinaacademy.platform.feature.lesson.entity.Lesson;
 import com.vinaacademy.platform.feature.section.entity.Section;
-import com.vinaacademy.platform.feature.user.entity.User;
 import com.vinaacademy.platform.feature.video.entity.Video;
 import com.vinaacademy.platform.feature.video.enums.VideoStatus;
 import com.vinaacademy.platform.feature.video.repository.VideoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 /**
  * Concrete creator for creating Video lessons
@@ -21,13 +22,13 @@ public class VideoLessonCreator extends LessonCreator {
     private final VideoRepository videoRepository;
 
     @Override
-    public Lesson createLesson(String title, Section section, User author, boolean isFree, int orderIndex) {
+    public Lesson createLesson(String title, Section section, UUID authorId, boolean isFree, int orderIndex) {
         Video video = Video.builder()
                 .title(title)
                 .section(section)
                 .free(isFree)
                 .orderIndex(orderIndex)
-                .author(author)
+                .authorId(authorId)
                 .status(VideoStatus.NO_VIDEO)
                 .build();
 
@@ -35,7 +36,7 @@ public class VideoLessonCreator extends LessonCreator {
     }
     
     @Override
-    public Lesson createLesson(LessonRequest request, Section section, User author) {
+    public Lesson createLesson(LessonRequest request, Section section, UUID authorId) {
         validateRequest(request);
         
         Video video = Video.builder()
@@ -44,7 +45,7 @@ public class VideoLessonCreator extends LessonCreator {
                 .section(section)
                 .free(request.isFree())
                 .orderIndex(request.getOrderIndex())
-                .author(author)
+                .authorId(authorId)
                 .thumbnailUrl(request.getThumbnailUrl())
                 .status(VideoStatus.NO_VIDEO)
                 .build();

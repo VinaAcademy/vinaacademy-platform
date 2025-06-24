@@ -3,7 +3,8 @@ package com.vinaacademy.platform.feature.lesson.factory;
 import com.vinaacademy.platform.feature.lesson.dto.LessonRequest;
 import com.vinaacademy.platform.feature.lesson.entity.Lesson;
 import com.vinaacademy.platform.feature.section.entity.Section;
-import com.vinaacademy.platform.feature.user.entity.User;
+
+import java.util.UUID;
 
 /**
  * Abstract creator class in the Factory Method pattern 
@@ -14,26 +15,26 @@ public abstract class LessonCreator {
     /**
      * The factory method that concrete creators must implement
      * to create specific lesson types
-     * 
-     * @param title The title of the lesson
-     * @param section The section this lesson belongs to
-     * @param author The user who creates the lesson
-     * @param isFree Indicates if the lesson is free to access
+     *
+     * @param title      The title of the lesson
+     * @param section    The section this lesson belongs to
+     * @param authorId   The user who creates the lesson
+     * @param isFree     Indicates if the lesson is free to access
      * @param orderIndex The display order of the lesson within its section
      * @return A newly created lesson of the appropriate type
      */
-    public abstract Lesson createLesson(String title, Section section, User author, 
-                                       boolean isFree, int orderIndex);
+    public abstract Lesson createLesson(String title, Section section, UUID authorId,
+                                        boolean isFree, int orderIndex);
     
     /**
      * Factory method that creates a lesson from a request object
-     * 
-     * @param request The lesson request containing lesson properties
-     * @param section The section this lesson belongs to
-     * @param author The user who creates the lesson
+     *
+     * @param request  The lesson request containing lesson properties
+     * @param section  The section this lesson belongs to
+     * @param authorId The user who creates the lesson
      * @return A newly created lesson of the appropriate type
      */
-    public abstract Lesson createLesson(LessonRequest request, Section section, User author);
+    public abstract Lesson createLesson(LessonRequest request, Section section, UUID authorId);
     
     /**
      * Validates that the request contains all required 

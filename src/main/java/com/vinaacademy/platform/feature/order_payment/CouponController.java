@@ -3,13 +3,13 @@ package com.vinaacademy.platform.feature.order_payment;
 import com.vinaacademy.platform.feature.common.response.ApiResponse;
 import com.vinaacademy.platform.feature.order_payment.dto.CouponDto;
 import com.vinaacademy.platform.feature.order_payment.service.CouponService;
-import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.web.bind.annotation.*;
+import vn.vinaacademy.common.constant.AuthConstants;
+import vn.vinaacademy.common.security.annotation.HasAnyRole;
 
 import java.util.List;
 

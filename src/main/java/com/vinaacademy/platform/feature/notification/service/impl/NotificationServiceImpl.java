@@ -1,5 +1,7 @@
 package com.vinaacademy.platform.feature.notification.service.impl;
 
+import com.vinaacademy.platform.client.UserClient;
+import com.vinaacademy.platform.client.dto.UserDto;
 import com.vinaacademy.platform.exception.BadRequestException;
 import com.vinaacademy.platform.exception.UnauthorizedException;
 import com.vinaacademy.platform.feature.notification.dto.NotificationCreateDTO;
@@ -8,20 +10,17 @@ import com.vinaacademy.platform.feature.notification.entity.Notification;
 import com.vinaacademy.platform.feature.notification.enums.NotificationType;
 import com.vinaacademy.platform.feature.notification.mapper.NotificationMapper;
 import com.vinaacademy.platform.feature.notification.observer.NotificationAction;
-import com.vinaacademy.platform.feature.notification.observer.NotificationPublisher;
 import com.vinaacademy.platform.feature.notification.observer.NotificationSubject;
 import com.vinaacademy.platform.feature.notification.repository.NotificationRepository;
 import com.vinaacademy.platform.feature.notification.service.NotificationService;
-import com.vinaacademy.platform.feature.user.UserRepository;
-import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
-import com.vinaacademy.platform.feature.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import vn.vinaacademy.common.security.SecurityContextHelper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,18 +31,18 @@ import java.util.UUID;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final UserRepository userRepository;
-    private final SecurityHelper securityHelper;
+    @Autowired
+    private UserClient userClient;
+    private final SecurityContextHelper securityContextHelper;
 
     private final NotificationSubject notificationPublisher;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public NotificationDTO createNotification(NotificationCreateDTO dto) {
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> BadRequestException.message("Không tìm thấy user"));
+        UserDto user = userClient.getUserByIdAsDto(dto.getUserId()).getData();
         Notification notification = NotificationMapper.INSTANCE.toEntity(dto);
-        notification.setUser(user);
+        notification.setRecipientId(user.getId());
         notification.setCreatedAt(LocalDateTime.now());
         notification.setIsRead(false);
         notification = notificationRepository.save(notification);
@@ -59,17 +58,17 @@ public class NotificationServiceImpl implements NotificationService {
     // qua tokenAccess
     @Override
     public Page<NotificationDTO> getUserNotificationsPaginated(Boolean read, NotificationType type, Pageable pageable) {
-        User user = findUser();
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
         Page<Notification> page;
 
         if (type != null && read != null) {
-            page = notificationRepository.findByUserAndTypeAndIsRead(user, type, read, pageable);
+            page = notificationRepository.findByRecipientIdAndTypeAndIsRead(currentUserId, type, read, pageable);
         } else if (type != null) {
-            page = notificationRepository.findByUserAndType(user, type, pageable);
+            page = notificationRepository.findByRecipientIdAndType(currentUserId, type, pageable);
         } else if (read != null) {
-            page = notificationRepository.findByUserAndIsRead(user, read, pageable);
+            page = notificationRepository.findByRecipientIdAndIsRead(currentUserId, read, pageable);
         } else {
-            page = notificationRepository.findByUser(user, pageable);
+            page = notificationRepository.findByRecipientId(currentUserId, pageable);
         }
 
         return page.map(NotificationMapper.INSTANCE::toDTO);
@@ -80,8 +79,8 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void markAsRead(UUID notificationId) {
         Notification notification = findNotification(notificationId);
-        User user = findUser();
-        if (!notification.getUser().getId().equals(user.getId()))
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
+        if (!notification.getRecipientId().equals(currentUserId))
             throw UnauthorizedException.message("Xác thực thất bại vui lòng kiểm tra lại");
         notification.setIsRead(true);
         notification.setReadAt(LocalDateTime.now());
@@ -95,8 +94,8 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void deleteNotification(UUID notificationId) {
         Notification notification = findNotification(notificationId);
-        User user = findUser();
-        if (!notification.getUser().getId().equals(user.getId()))
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
+        if (!notification.getRecipientId().equals(currentUserId))
             throw UnauthorizedException.message("Xác thực thất bại vui lòng kiểm tra lại");
         notificationRepository.delete(notification); // Perform hard deletion
 
@@ -113,8 +112,8 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public void markReadAll() {
-        User user = findUser();
-        List<Notification> unreadNotis = notificationRepository.findByIsReadAndUser(false, user);
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
+        List<Notification> unreadNotis = notificationRepository.findByIsReadAndRecipientId(false, currentUserId);
 
         if (unreadNotis.isEmpty()) return;
 
@@ -126,13 +125,6 @@ public class NotificationServiceImpl implements NotificationService {
                         NotificationAction.READ
                 )
         );
-    }
-
-    public User findUser() {
-        User user = securityHelper.getCurrentUser();
-        if (user == null)
-            throw UnauthorizedException.message("Xác thực thất bại vui lòng kiểm tra lại");
-        return user;
     }
 
 }

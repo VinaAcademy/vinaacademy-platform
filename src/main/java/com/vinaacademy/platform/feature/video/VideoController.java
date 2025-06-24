@@ -2,10 +2,8 @@ package com.vinaacademy.platform.feature.video;
 
 import com.vinaacademy.platform.feature.common.response.ApiResponse;
 import com.vinaacademy.platform.feature.request.ProcessVideoRequest;
-import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
-import com.vinaacademy.platform.feature.user.auth.annotation.RequiresResourcePermission;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
-import com.vinaacademy.platform.feature.user.constant.ResourceConstants;
+import vn.vinaacademy.common.security.annotation.HasAnyRole;
+import vn.vinaacademy.common.constant.AuthConstants;
 import com.vinaacademy.platform.feature.video.dto.VideoDto;
 import com.vinaacademy.platform.feature.video.dto.VideoRequest;
 import com.vinaacademy.platform.feature.video.service.VideoProcessorService;
@@ -24,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+//
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -76,9 +74,9 @@ public class VideoController {
     })
     @PostMapping("/process")
     @HasAnyRole({AuthConstants.ADMIN_ROLE, AuthConstants.INSTRUCTOR_ROLE})
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
-            idParam = "processVideoRequest.videoId",
-            permission = ResourceConstants.EDIT)
+//    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
+//            idParam = "processVideoRequest.videoId",
+//            permission = ResourceConstants.EDIT)
     public ApiResponse<Void> processVideo(
             @RequestBody @Valid ProcessVideoRequest processVideoRequest) {
         log.debug("Processing video: {}", processVideoRequest.getVideoId());
@@ -93,11 +91,11 @@ public class VideoController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized access"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Video segment not found")
     })
-    @PreAuthorize("isAuthenticated()")
+//    // @PreAuthorize("isAuthenticated()")
     @GetMapping("/{videoId}/**")
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
-            idParam = "videoId",
-            permission = ResourceConstants.VIEW)
+//    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
+//            idParam = "videoId",
+//            permission = ResourceConstants.VIEW)
     public ResponseEntity<Resource> getSegment(HttpServletRequest request,
                                                @PathVariable UUID videoId) throws MalformedURLException {
 

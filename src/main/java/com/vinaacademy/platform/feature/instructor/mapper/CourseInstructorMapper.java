@@ -12,7 +12,7 @@ public interface CourseInstructorMapper {
 
     CourseInstructorMapper INSTANCE = Mappers.getMapper(CourseInstructorMapper.class);
     
-    @Mapping(source = "instructor.id", target = "userId")
+    @Mapping(source = "instructorId", target = "userId")
     @Mapping(source = "course.id", target = "courseId")
     @Mapping(source = "isOwner", target = "isOwner")
     CourseInstructorDto toDto (CourseInstructor courseInstructor);

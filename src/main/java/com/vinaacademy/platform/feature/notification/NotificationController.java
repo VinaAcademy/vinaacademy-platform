@@ -5,8 +5,6 @@ import com.vinaacademy.platform.feature.notification.dto.NotificationCreateDTO;
 import com.vinaacademy.platform.feature.notification.dto.NotificationDTO;
 import com.vinaacademy.platform.feature.notification.enums.NotificationType;
 import com.vinaacademy.platform.feature.notification.service.NotificationService;
-import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +13,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.prepost.PreAuthorize;
+
 import org.springframework.web.bind.annotation.*;
+import vn.vinaacademy.common.constant.AuthConstants;
+import vn.vinaacademy.common.security.annotation.HasAnyRole;
 
 import java.util.UUID;
 

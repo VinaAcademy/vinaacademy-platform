@@ -1,12 +1,12 @@
 package com.vinaacademy.platform.feature.cart.entity;
 
 import com.vinaacademy.platform.feature.order_payment.entity.Coupon;
-import com.vinaacademy.platform.feature.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -26,9 +26,9 @@ public class Cart {
     @JoinColumn(name = "coupon_id")
     private Coupon coupon;
 
-    @OneToOne
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+
+    @Column(name = "user_id", nullable = false, unique = true)
+    private UUID userId;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> cartItems = new ArrayList<>();

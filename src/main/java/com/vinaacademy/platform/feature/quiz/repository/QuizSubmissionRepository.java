@@ -16,7 +16,7 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
      */
     @Query("SELECT submission FROM QuizSubmission submission " +
             "JOIN submission.quizSession session " +
-            "WHERE session.quiz.id = :quizId AND session.user.id = :userId "
+            "WHERE session.quiz.id = :quizId AND session.userId = :userId "
             + "ORDER BY submission.createdDate DESC")
     List<QuizSubmission> findByQuizIdAndUserIdOrderByCreatedDateDesc(UUID quizId, UUID userId);
 
@@ -25,7 +25,7 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
      */
     @Query("SELECT submission FROM QuizSubmission submission " +
             "JOIN submission.quizSession session " +
-            "WHERE session.quiz.id = :quizId AND session.user.id = :userId " +
+            "WHERE session.quiz.id = :quizId AND session.userId = :userId " +
             "ORDER BY submission.createdDate DESC " +
             "LIMIT 1")
     Optional<QuizSubmission> findFirstByQuizIdAndUserIdOrderByCreatedDateDesc(UUID quizId, UUID userId);

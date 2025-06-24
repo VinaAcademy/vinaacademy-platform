@@ -1,7 +1,6 @@
 package com.vinaacademy.platform.configuration;
 
 import com.vinaacademy.platform.configuration.cache.CacheName;
-import com.vinaacademy.platform.feature.email.mq.redis.EmailSubscriber;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.vinaacademy.platform.feature.email.mq.redis.EmailQueueConstant.EMAIL_CHANNEL;
 
 @ConditionalOnProperty(name = "spring.data.redis.enabled", havingValue = "true")
 @Configuration
@@ -76,16 +74,16 @@ public class RedisConfig {
         return template;
     }
 
-    @Bean
-    public RedisMessageListenerContainer emailMessageContainer(RedisConnectionFactory connectionFactory, EmailSubscriber emailSubscriber) {
-        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
-        container.addMessageListener(emailSubscriber, new ChannelTopic(EMAIL_CHANNEL));
-
-        container.setErrorHandler(e -> {
-            log.error("Error in Redis message listener container", e);
-        });
-        return container;
-    }
+//    @Bean
+//    public RedisMessageListenerContainer emailMessageContainer(RedisConnectionFactory connectionFactory, EmailSubscriber emailSubscriber) {
+//        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+//        container.setConnectionFactory(connectionFactory);
+//        container.addMessageListener(emailSubscriber, new ChannelTopic(EMAIL_CHANNEL));
+//
+//        container.setErrorHandler(e -> {
+//            log.error("Error in Redis message listener container", e);
+//        });
+//        return container;
+//    }
 
 }

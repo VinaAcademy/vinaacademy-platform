@@ -4,8 +4,6 @@ import com.vinaacademy.platform.feature.common.response.ApiResponse;
 import com.vinaacademy.platform.feature.instructor.dto.CourseInstructorDto;
 import com.vinaacademy.platform.feature.instructor.dto.CourseInstructorDtoRequest;
 import com.vinaacademy.platform.feature.instructor.service.CourseInstructorService;
-import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.web.bind.annotation.*;
+import vn.vinaacademy.common.constant.AuthConstants;
+import vn.vinaacademy.common.security.annotation.HasAnyRole;
 
 @RestController
 @RequestMapping("/api/v1/courseinstructor")

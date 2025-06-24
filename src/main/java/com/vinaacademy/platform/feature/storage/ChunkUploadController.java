@@ -9,7 +9,7 @@ import com.vinaacademy.platform.feature.storage.service.ChunkUploadService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,14 +23,14 @@ public class ChunkUploadController {
     private final ChunkUploadService chunkUploadService;
 
     @PostMapping("/initiate")
-    @PreAuthorize("isAuthenticated()")
+    // @PreAuthorize("isAuthenticated()")
     public ApiResponse<UploadSessionDto> initiateUpload(@RequestBody @Valid InitiateUploadRequest request) {
         UploadSessionDto session = chunkUploadService.initiateUpload(request);
         return ApiResponse.success(session);
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("isAuthenticated()")
+    // @PreAuthorize("isAuthenticated()")
     public ApiResponse<UploadResult> uploadChunk(
             @RequestParam("chunk") MultipartFile chunkFile,
             @ModelAttribute ChunkUploadRequest request) {
@@ -39,20 +39,20 @@ public class ChunkUploadController {
     }
 
     @GetMapping("/status/{sessionId}")
-    @PreAuthorize("isAuthenticated()")
+    // @PreAuthorize("isAuthenticated()")
     public ApiResponse<UploadSessionDto> getUploadStatus(@PathVariable UUID sessionId) {
         UploadSessionDto session = chunkUploadService.getUploadStatus(sessionId);
         return ApiResponse.success(session);
     }
 
     @GetMapping("/sessions")
-    @PreAuthorize("isAuthenticated()")
+    // @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<UploadSessionDto>> getAllUploadSessions() {
         return  ApiResponse.success(chunkUploadService.getAllActiveSessions());
     }
 
     @DeleteMapping("/cancel/{sessionId}")
-    @PreAuthorize("isAuthenticated()")
+    // @PreAuthorize("isAuthenticated()")
     public ApiResponse<Void> cancelUpload(@PathVariable UUID sessionId) {
         chunkUploadService.cancelUpload(sessionId);
         return ApiResponse.success(null);

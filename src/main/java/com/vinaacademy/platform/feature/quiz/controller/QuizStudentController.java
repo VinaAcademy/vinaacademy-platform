@@ -8,10 +8,9 @@ import com.vinaacademy.platform.feature.quiz.dto.UserAnswerRequest;
 import com.vinaacademy.platform.feature.quiz.entity.QuizSession;
 import com.vinaacademy.platform.feature.quiz.service.QuizCacheService;
 import com.vinaacademy.platform.feature.quiz.service.QuizService;
-import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
-import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
-import com.vinaacademy.platform.feature.user.entity.User;
+import vn.vinaacademy.common.security.SecurityContextHelper;
+import vn.vinaacademy.common.security.annotation.HasAnyRole;
+import vn.vinaacademy.common.constant.AuthConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,7 +40,7 @@ public class QuizStudentController {
     private final QuizCacheService quizCacheService;
 
     @Autowired
-    private SecurityHelper securityHelper;
+    private SecurityContextHelper securityHelper;
 
     @Operation(summary = "Get quiz for student")
     @ApiResponses(value = {
@@ -112,8 +111,8 @@ public class QuizStudentController {
     @GetMapping("/{quizId}/cached-answers")
     public ApiResponse<Map<String, UserAnswerRequest>> getCachedAnswers(@PathVariable UUID quizId,
                                                                       @RequestParam UUID sessionId) {
-        User currentUser = securityHelper.getCurrentUser();
-        Map<String, UserAnswerRequest> cachedAnswers = quizCacheService.getCachedUserAnswers(currentUser.getId(), sessionId, quizId);
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
+        Map<String, UserAnswerRequest> cachedAnswers = quizCacheService.getCachedUserAnswers(currentUserId, sessionId, quizId);
 
         if (cachedAnswers == null || cachedAnswers.isEmpty()) {
             return ApiResponse.success(new HashMap<>());

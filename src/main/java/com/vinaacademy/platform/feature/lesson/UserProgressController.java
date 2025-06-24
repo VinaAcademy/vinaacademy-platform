@@ -3,8 +3,6 @@ package com.vinaacademy.platform.feature.lesson;
 import com.vinaacademy.platform.feature.common.response.ApiResponse;
 import com.vinaacademy.platform.feature.lesson.dto.UserProgressDto;
 import com.vinaacademy.platform.feature.lesson.service.UserProgressService;
-import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,7 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.security.access.prepost.PreAuthorize;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,7 +45,7 @@ public class UserProgressController {
 //            )
 //    })
 //    @GetMapping("/user/{userId}/course/{courseId}")
-//    @PreAuthorize("isAuthenticated()")
+//    // @PreAuthorize("isAuthenticated()")
 //    public ApiResponse<List<UserProgressDto>> getProgressByUser(
 //            @PathVariable UUID userId,
 //            @PathVariable UUID courseId) {
@@ -121,7 +119,7 @@ public class UserProgressController {
 //            )
 //    })
 //    @PutMapping("/user/{userId}/lesson/{lessonId}")
-//    @PreAuthorize("isAuthenticated()")
+//    // @PreAuthorize("isAuthenticated()")
 //    public ApiResponse<UserProgressDto> updateProgress(
 //            @PathVariable UUID userId,
 //            @PathVariable UUID lessonId,

@@ -6,11 +6,6 @@ import com.vinaacademy.platform.feature.enrollment.dto.EnrollmentRequest;
 import com.vinaacademy.platform.feature.enrollment.dto.EnrollmentResponse;
 import com.vinaacademy.platform.feature.enrollment.enums.ProgressStatus;
 import com.vinaacademy.platform.feature.enrollment.service.EnrollmentService;
-import com.vinaacademy.platform.feature.user.UserRepository;
-import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
-import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
-import com.vinaacademy.platform.feature.user.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,8 +18,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import vn.vinaacademy.common.constant.AuthConstants;
+import vn.vinaacademy.common.security.SecurityContextHelper;
+import vn.vinaacademy.common.security.annotation.HasAnyRole;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,8 +35,7 @@ import java.util.UUID;
 public class EnrollmentController {
 
     private final EnrollmentService enrollmentService;
-    private final UserRepository userRepository;
-    private final SecurityHelper securityHelper;
+    private final SecurityContextHelper securityContextHelper;
 
     /**
      * Đăng ký khóa học mới
@@ -50,8 +46,8 @@ public class EnrollmentController {
     public ResponseEntity<ApiResponse<EnrollmentResponse>> enrollCourse(
             @Valid @RequestBody EnrollmentRequest request) {
 
-        UUID userId = securityHelper.getCurrentUser().getId();
-        
+        UUID userId = securityContextHelper.getCurrentUserIdAsUUID();
+
         EnrollmentResponse enrollmentResponse = enrollmentService.enrollCourse(request, userId);
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -70,7 +66,7 @@ public class EnrollmentController {
     @Operation(summary = "Kiểm tra đăng ký", description = "Kiểm tra xem học viên đã đăng ký khóa học chưa")
     public ResponseEntity<ApiResponse<Boolean>> checkEnrollment(
             @RequestParam UUID courseId) {
-        UUID userId = securityHelper.getCurrentUser().getId();
+        UUID userId = securityContextHelper.getCurrentUserIdAsUUID();
         boolean isEnrolled = enrollmentService.isEnrolled(userId, courseId);
 
         return ResponseEntity.ok(ApiResponse.<Boolean>builder()
@@ -90,7 +86,7 @@ public class EnrollmentController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) ProgressStatus status) {
 
-        UUID userId = securityHelper.getCurrentUser().getId();
+        UUID userId = securityContextHelper.getCurrentUserIdAsUUID();
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("startAt").descending());
 
@@ -130,24 +126,14 @@ public class EnrollmentController {
     public ResponseEntity<ApiResponse<EnrollmentResponse>> getEnrollment(
             @PathVariable Long enrollmentId) {
 
-        Authentication authentication = securityHelper.getAuthentication();
-
-        if (authentication == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.<EnrollmentResponse>builder()
-                            .status("error")
-                            .message("Người dùng chưa xác thực")
-                            .build());
-        }
-
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
 
         //Kiểm tra quyền truy cập
-        if (securityHelper.hasRole(AuthConstants.ADMIN_ROLE)) {
+        if (securityContextHelper.hasRole(AuthConstants.ADMIN_ROLE)) {
             // Admin có quyền xem tất cả enrollment
-        } else if (securityHelper.hasRole(AuthConstants.INSTRUCTOR_ROLE)) {
+        } else if (securityContextHelper.hasRole(AuthConstants.INSTRUCTOR_ROLE)) {
             // Instructor chỉ có thể xem enrollment của khóa học mà họ dạy
-            if (!enrollmentService.isEnrollmentInCourseOfInstructor(enrollmentId, currentUser.getId())) {
+            if (!enrollmentService.isEnrollmentInCourseOfInstructor(enrollmentId,currentUserId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(ApiResponse.<EnrollmentResponse>builder()
                                 .status("error")
@@ -156,7 +142,7 @@ public class EnrollmentController {
             }
         } else {
             // Student chỉ có thể xem enrollment của mình
-            if (!enrollmentService.isEnrollmentOwnerByUser(enrollmentId, currentUser.getId())) {
+            if (!enrollmentService.isEnrollmentOwnerByUser(enrollmentId,currentUserId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(ApiResponse.<EnrollmentResponse>builder()
                                 .status("error")
@@ -183,10 +169,10 @@ public class EnrollmentController {
             @PathVariable Long enrollmentId,
             @RequestParam Double progressPercentage) {
 
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
 
         // Kiểm tra xem người dùng có quyền cập nhật tiến độ này không
-        if (!enrollmentService.isEnrollmentOwnerByUser(enrollmentId, currentUser.getId())) {
+        if (!enrollmentService.isEnrollmentOwnerByUser(enrollmentId,currentUserId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.<EnrollmentResponse>builder()
                             .status("error")
@@ -213,10 +199,10 @@ public class EnrollmentController {
             @RequestParam ProgressStatus status) {
 
 
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
 
         // Kiểm tra xem người dùng có quyền cập nhật trạng thái này không
-        if (!enrollmentService.isEnrollmentOwnerByUser(enrollmentId, currentUser.getId())) {
+        if (!enrollmentService.isEnrollmentOwnerByUser(enrollmentId,currentUserId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.<EnrollmentResponse>builder()
                             .status("error")
@@ -242,10 +228,10 @@ public class EnrollmentController {
     public ResponseEntity<ApiResponse<Void>> cancelEnrollment(
             @PathVariable Long enrollmentId) {
 
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
 
         // Kiểm tra xem người dùng có quyền hủy đăng ký này không
-        if (!enrollmentService.isEnrollmentOwnerByUser(enrollmentId, currentUser.getId())) {
+        if (!enrollmentService.isEnrollmentOwnerByUser(enrollmentId,currentUserId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.<Void>builder()
                             .status("error")
@@ -272,12 +258,12 @@ public class EnrollmentController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) ProgressStatus status) {
 
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
 
         // Kiểm tra xem người dùng có quyền truy cập vào khóa học này không
-        if (!securityHelper.hasRole(AuthConstants.ADMIN_ROLE) && securityHelper.hasRole(AuthConstants.INSTRUCTOR_ROLE)) {
+        if (!securityContextHelper.hasRole(AuthConstants.ADMIN_ROLE) && securityContextHelper.hasRole(AuthConstants.INSTRUCTOR_ROLE)) {
             // Instructor cần được kiểm tra có phải là người dạy khóa học này không
-            if (!enrollmentService.isCourseOwnerByInstructor(courseId, currentUser.getId())) {
+            if (!enrollmentService.isCourseOwnerByInstructor(courseId,currentUserId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(ApiResponse.<PaginationResponse<EnrollmentResponse>>builder()
                                 .status("error")

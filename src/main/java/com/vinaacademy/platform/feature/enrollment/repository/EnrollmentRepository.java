@@ -3,7 +3,6 @@ package com.vinaacademy.platform.feature.enrollment.repository;
 import com.vinaacademy.platform.feature.course.entity.Course;
 import com.vinaacademy.platform.feature.enrollment.Enrollment;
 import com.vinaacademy.platform.feature.enrollment.enums.ProgressStatus;
-import com.vinaacademy.platform.feature.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -72,7 +71,7 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long>, J
     void updateStatusByCourseId(@Param("courseId") UUID courseId, @Param("status") ProgressStatus status);
 
     //Tìm các đăng ký khóa học đang hoạt động (chưa hoàn thành và đã bắt đầu)
-    @Query("SELECT e FROM Enrollment e WHERE e.user.id = :userId AND e.status = 'IN_PROGRESS'")
+    @Query("SELECT e FROM Enrollment e WHERE e.userId = :userId AND e.status = 'IN_PROGRESS'")
     List<Enrollment> findActiveEnrollmentsByUserId(@Param("userId") UUID userId);
 
 
@@ -82,11 +81,7 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long>, J
     //Lấy tất cả đăng ký khóa học của một khóa học theo trạng thái (có phân trang)
     Page<Enrollment> findByCourseIdAndStatus(UUID courseId, ProgressStatus status, Pageable pageable);
     
-    Optional<Enrollment> findByCourseAndUser(Course course, User currentUser);
+    Optional<Enrollment> findByCourseAndUserId(Course course, UUID currentUserId);
 
     boolean existsByCourseIdAndUserId(UUID courseId, UUID studentId);
-    
-    Long countByUserAndStatus(User user, ProgressStatus status);
-    
-    Long countByUser(User user);
 }

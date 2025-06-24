@@ -18,8 +18,8 @@ import java.util.UUID;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
-	Optional<Order> findFirstByUser_IdAndOrderItems_Course_IdAndStatusOrderByCreatedDateAsc(UUID userId, UUID courseId,
-			OrderStatus status);
+	Optional<Order> findFirstByUserIdAndOrderItems_Course_IdAndStatusOrderByCreatedDateAsc(UUID userId, UUID courseId,
+																						   OrderStatus status);
 
 	Page<Order> findByUserId(UUID userId, Pageable pageable);
 

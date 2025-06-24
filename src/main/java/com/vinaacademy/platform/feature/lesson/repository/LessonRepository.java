@@ -3,7 +3,6 @@ package com.vinaacademy.platform.feature.lesson.repository;
 import com.vinaacademy.platform.feature.lesson.entity.Lesson;
 import com.vinaacademy.platform.feature.lesson.repository.projection.LessonAccessInfoDto;
 import com.vinaacademy.platform.feature.section.entity.Section;
-import com.vinaacademy.platform.feature.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,11 +18,6 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
      * Find lessons by section ordered by their index
      */
     List<Lesson> findBySectionOrderByOrderIndex(Section section);
-
-    /**
-     * Find lessons by author
-     */
-    List<Lesson> findByAuthor(User author);
 
     /**
      * Find lessons by section and title
@@ -59,12 +53,12 @@ public interface LessonRepository extends JpaRepository<Lesson, UUID> {
                 l.free,
                 CASE WHEN EXISTS (
                             SELECT 1 FROM CourseInstructor ci
-                                        WHERE ci.instructor.id = :userId
+                                        WHERE ci.instructorId = :userId
                                                     AND ci.course = s.course
                 ) THEN true ELSE false END,
                 CASE WHEN EXISTS (
                             SELECT 1 FROM Enrollment en
-                                        WHERE en.user.id = :userId
+                                        WHERE en.userId = :userId
                                                     AND en.course = s.course
                 ) THEN true ELSE false END
             )

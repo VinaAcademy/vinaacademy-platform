@@ -1,5 +1,6 @@
 package com.vinaacademy.platform.feature.quiz.service.impl;
 
+import com.vinaacademy.platform.client.UserClient;
 import com.vinaacademy.platform.exception.BadRequestException;
 import com.vinaacademy.platform.exception.NotFoundException;
 import com.vinaacademy.platform.exception.ValidationException;
@@ -20,18 +21,16 @@ import com.vinaacademy.platform.feature.quiz.service.QuizService;
 import com.vinaacademy.platform.feature.quiz.service.QuizSessionService;
 import com.vinaacademy.platform.feature.section.entity.Section;
 import com.vinaacademy.platform.feature.section.repository.SectionRepository;
-import com.vinaacademy.platform.feature.user.auth.annotation.RequiresResourcePermission;
-import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
-import com.vinaacademy.platform.feature.user.constant.ResourceConstants;
-import com.vinaacademy.platform.feature.user.entity.User;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.ws.rs.core.SecurityContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.vinaacademy.common.security.SecurityContextHelper;
 
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
@@ -58,7 +57,9 @@ public class QuizServiceImpl implements QuizService {
     @Autowired
     private QuizMapper quizMapper;
     @Autowired
-    private SecurityHelper securityHelper;
+    private UserClient userClient;
+    @Autowired
+    private SecurityContextHelper securityHelper;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -67,13 +68,10 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional(readOnly = true)
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
-            permission = ResourceConstants.VIEW_OWN)
+//    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
+//            permission = ResourceConstants.VIEW_OWN)
     public QuizDto getQuizByIdForInstructor(UUID id) {
-        User user = securityHelper.getCurrentUser();
-        if (user == null) {
-            throw new ValidationException("User not found");
-        }
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
 
         Quiz quiz = findQuizById(id);
         if (quiz.getSection() == null) {
@@ -85,13 +83,9 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional(readOnly = true)
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON)
+//    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON)
     public QuizDto getQuizForStudent(UUID id) {
-        User user = securityHelper.getCurrentUser();
-        if (user == null) {
-            throw new ValidationException("User not found");
-        }
-
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
         Quiz quiz = findQuizById(id);
         if (quiz.isRandomizeQuestions()) {
             // Randomize questions for the quiz
@@ -141,14 +135,14 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
-            permission = ResourceConstants.VIEW)
+//    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
+//            permission = ResourceConstants.VIEW)
     public QuizSession startQuiz(UUID quizId) {
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
         Quiz quiz = findQuizById(quizId);
 
         // Check if there's an active session already
-        Optional<QuizSession> existingSession = findActiveQuizSession(quizId, currentUser.getId());
+        Optional<QuizSession> existingSession = findActiveQuizSession(quizId, currentUserId);
 
         if (existingSession.isPresent()) {
             QuizSession session = existingSession.get();
@@ -165,7 +159,7 @@ public class QuizServiceImpl implements QuizService {
         }
 
         // Create a new session
-        QuizSession session = QuizSession.createNewSession(quiz, currentUser);
+        QuizSession session = QuizSession.createNewSession(quiz, currentUserId);
         LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(quiz.getTimeLimit());
         session.setExpiryTime(expiryTime);
         taskScheduler.schedule(() -> {
@@ -180,21 +174,21 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
-            permission = ResourceConstants.VIEW,
-            idParam = "request.quizId")
+//    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
+//            permission = ResourceConstants.VIEW,
+//            idParam = "request.quizId")
     public QuizSubmissionResultDto submitQuiz(QuizSubmissionRequest request) {
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
         Quiz quiz = findQuizById(request.getQuizId());
 
         // Check if we allow retaking quizzes and if the student has already taken this quiz
-        validateRetakePolicy(quiz, currentUser.getId());
+        validateRetakePolicy(quiz, currentUserId);
 
         // Get current time as end time
         LocalDateTime endTime = LocalDateTime.now();
 
         // Find and validate the active session
-        QuizSession session = validateAndEndActiveSession(request.getQuizId(), currentUser.getId());
+        QuizSession session = validateAndEndActiveSession(request.getQuizId(), currentUserId);
         LocalDateTime startTime = session.getStartTime();
 
         // Validate time limit if quiz has one
@@ -214,7 +208,6 @@ public class QuizServiceImpl implements QuizService {
 
         // Track points and scoring
         Quiz quiz = quizSession.getQuiz();
-        User currentUser = quizSession.getUser();
 
         double totalPoints = quiz.getTotalPoints();
         double earnedPoints = 0;
@@ -241,10 +234,12 @@ public class QuizServiceImpl implements QuizService {
         double scorePercentage = (totalPoints > 0) ? (earnedPoints / totalPoints) * 100 : 0;
         submission.setPassed(scorePercentage >= quiz.getPassingScore());
 
+        UUID currentUserId = quizSession.getUserId();
+
         Optional<UserProgress> upOpt = userProgressRepository
-                .findByLessonIdAndUserId(quiz.getId(), currentUser.getId());
+                .findByLessonIdAndUserId(quiz.getId(), currentUserId);
         if (submission.isPassed() && upOpt.isEmpty()) {
-            lessonService.markLessonCompleted(quiz, currentUser);
+            lessonService.markLessonCompleted(quiz, currentUserId);
         }
 
         QuizSubmission savedSubmission = quizSubmissionRepository.save(submission);
@@ -259,13 +254,13 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional(readOnly = true)
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
-            permission = ResourceConstants.VIEW)
+//    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
+//            permission = ResourceConstants.VIEW)
     public QuizSubmissionResultDto getLatestSubmission(UUID quizId) {
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
 
         Optional<QuizSubmission> latestSubmission = quizSubmissionRepository
-                .findFirstByQuizIdAndUserIdOrderByCreatedDateDesc(quizId, currentUser.getId());
+                .findFirstByQuizIdAndUserIdOrderByCreatedDateDesc(quizId, currentUserId);
 
         return latestSubmission.map(this::buildSubmissionResultDto).orElse(null);
 
@@ -273,13 +268,13 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional(readOnly = true)
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
-            permission = ResourceConstants.VIEW)
+//    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON,
+//            permission = ResourceConstants.VIEW)
     public List<QuizSubmissionResultDto> getSubmissionHistory(UUID quizId) {
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
 
         List<QuizSubmission> submissions = quizSubmissionRepository
-                .findByQuizIdAndUserIdOrderByCreatedDateDesc(quizId, currentUser.getId());
+                .findByQuizIdAndUserIdOrderByCreatedDateDesc(quizId, currentUserId);
 
         if (submissions.isEmpty()) {
             throw new NotFoundException("No submissions found for quiz: " + quizId);
@@ -292,7 +287,7 @@ public class QuizServiceImpl implements QuizService {
 
     @Override
     @Transactional(readOnly = true)
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON)
+//    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON)
     public List<QuizSubmissionResultDto> getQuizSubmissions(UUID quizId) {
         List<QuizSubmission> submissions = quizSubmissionRepository
                 .findByQuizIdAndUserIdOrderByCreatedDateDesc(quizId, null);
@@ -305,9 +300,9 @@ public class QuizServiceImpl implements QuizService {
     @Transactional
     @Override
     public void cacheQuizAnswer(UUID quizId, UserAnswerRequest request) {
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
 
-        Optional<QuizSession> existingSession = findActiveQuizSession(quizId, currentUser.getId());
+        Optional<QuizSession> existingSession = findActiveQuizSession(quizId, currentUserId);
         if (existingSession.isEmpty()) {
             throw BadRequestException.message("Không có phiên làm bài nào đang hoạt động");
         }
@@ -316,7 +311,7 @@ public class QuizServiceImpl implements QuizService {
             quizSessionService.deactivateSession(session);
         }
         // Cache the answer using the quiz cache service
-        quizCacheService.updateCacheAnswer(currentUser.getId(), session.getId(), quizId, request);
+        quizCacheService.updateCacheAnswer(currentUserId, session.getId(), quizId, request);
     }
 
     /**

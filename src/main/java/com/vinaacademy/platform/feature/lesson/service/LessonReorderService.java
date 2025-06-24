@@ -6,9 +6,6 @@ import com.vinaacademy.platform.feature.lesson.entity.Lesson;
 import com.vinaacademy.platform.feature.lesson.repository.LessonRepository;
 import com.vinaacademy.platform.feature.section.entity.Section;
 import com.vinaacademy.platform.feature.section.repository.SectionRepository;
-import com.vinaacademy.platform.feature.user.auth.annotation.RequiresResourcePermission;
-import com.vinaacademy.platform.feature.user.auth.service.AuthorizationService;
-import com.vinaacademy.platform.feature.user.constant.ResourceConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,7 +24,7 @@ public class LessonReorderService {
 
     private final LessonRepository lessonRepository;
     private final SectionRepository sectionRepository;
-    private final AuthorizationService authorizationService;
+//    private final AuthorizationService authorizationService;
 
     /**
      * Sắp xếp lại thứ tự các bài học trong một section
@@ -35,11 +32,11 @@ public class LessonReorderService {
      * @param lessonIds Danh sách ID các bài học theo thứ tự mới
      */
     @Transactional
-    @RequiresResourcePermission(
-            resourceType = ResourceConstants.SECTION,
-            permission = ResourceConstants.EDIT,
-            idParam = "sectionId"
-    )
+//    @RequiresResourcePermission(
+//            resourceType = ResourceConstants.SECTION,
+//            permission = ResourceConstants.EDIT,
+//            idParam = "sectionId"
+//    )
     public void reorderLessons(UUID sectionId, List<UUID> lessonIds) {
         Section section = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new NotFoundException("Section not found with id: " + sectionId));

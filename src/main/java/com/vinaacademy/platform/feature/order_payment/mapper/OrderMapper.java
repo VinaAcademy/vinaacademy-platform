@@ -10,7 +10,7 @@ import org.mapstruct.Mapping;
 public interface OrderMapper {
 		  
 	
-	@Mapping(target = "user_id", source = "user.id")
+	@Mapping(target = "user_id", source = "userId")
     @Mapping(target = "coupon_id", source = "coupon.id")
 	@Mapping(target = "payment_id", expression = "java(order.getPayment() != null ? order.getPayment().getId() : null)")
 	@Mapping(target = "orderItemsDto", ignore = true) 

@@ -3,10 +3,8 @@ package com.vinaacademy.platform.feature.order_payment.entity;
 import com.vinaacademy.platform.feature.common.entity.BaseEntity;
 import com.vinaacademy.platform.feature.order_payment.discount.DiscountStrategy;
 import com.vinaacademy.platform.feature.order_payment.discount.DiscountStrategyFactory;
-import com.vinaacademy.platform.feature.order_payment.enums.DiscountType;
 import com.vinaacademy.platform.feature.order_payment.enums.OrderStatus;
 import com.vinaacademy.platform.feature.order_payment.utils.Utils;
-import com.vinaacademy.platform.feature.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -45,10 +43,9 @@ public class Order extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "coupon_id")
     private Coupon coupon;
-    
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
     
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "payment_id", referencedColumnName = "id")

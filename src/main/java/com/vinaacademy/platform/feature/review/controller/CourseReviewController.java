@@ -1,15 +1,15 @@
 package com.vinaacademy.platform.feature.review.controller;
 
+import com.vinaacademy.platform.client.UserClient;
 import com.vinaacademy.platform.feature.common.exception.ResourceNotFoundException;
 import com.vinaacademy.platform.feature.common.response.ApiResponse;
 import com.vinaacademy.platform.feature.review.dto.CourseReviewDto;
 import com.vinaacademy.platform.feature.review.dto.CourseReviewRequestDto;
 import com.vinaacademy.platform.feature.review.service.CourseReviewService;
-import com.vinaacademy.platform.feature.user.UserRepository;
-import com.vinaacademy.platform.feature.user.auth.annotation.HasAnyRole;
-import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
-import com.vinaacademy.platform.feature.user.constant.AuthConstants;
-import com.vinaacademy.platform.feature.user.entity.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import vn.vinaacademy.common.security.SecurityContextHelper;
+import vn.vinaacademy.common.security.annotation.HasAnyRole;
+import vn.vinaacademy.common.constant.AuthConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,8 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,10 +35,11 @@ import java.util.UUID;
 @Tag(name = "Course Review API", description = "API đánh giá khóa học")
 public class CourseReviewController {
     private final CourseReviewService courseReviewService;
+    @Autowired
+    private UserClient userClient;
 
-    private final UserRepository userRepository;
-
-    private final SecurityHelper securityHelper;
+    @Autowired
+    private SecurityContextHelper securityHelper;
 
     @Operation(summary = "Tạo hoặc cập nhật đánh giá khóa học")
     @HasAnyRole({AuthConstants.STUDENT_ROLE})
@@ -48,7 +47,7 @@ public class CourseReviewController {
     public ResponseEntity<ApiResponse<CourseReviewDto>> createOrUpdateReview(
             @Valid @RequestBody CourseReviewRequestDto requestDto) {
 
-        UUID userId = securityHelper.getCurrentUser().getId();
+        UUID userId = securityHelper.getCurrentUserIdAsUUID();
 
         // Kiểm tra người dùng đã đăng ký khóa học chưa
         if (!courseReviewService.isUserEnrolledInCourse(userId, requestDto.getCourseId())) {
@@ -82,7 +81,7 @@ public class CourseReviewController {
     @GetMapping("/user")
     public ResponseEntity<ApiResponse<List<CourseReviewDto>>> getUserReviews() {
 
-        UUID userId = securityHelper.getCurrentUser().getId();
+        UUID userId = securityHelper.getCurrentUserIdAsUUID();
         List<CourseReviewDto> reviews = courseReviewService.getUserReviews(userId);
 
         log.info("User {} retrieved their reviews: {}", userId, reviews);
@@ -108,7 +107,7 @@ public class CourseReviewController {
     public ResponseEntity<ApiResponse<CourseReviewDto>> getUserReviewForCourse(
             @PathVariable UUID courseId) {
 
-        UUID userId = securityHelper.getCurrentUser().getId();
+        UUID userId = securityHelper.getCurrentUserIdAsUUID();
         CourseReviewDto review = courseReviewService.getUserReviewForCourse(userId, courseId);
 
         log.info("User {} retrieved their review for course {}: {}", userId, courseId, review);
@@ -126,8 +125,7 @@ public class CourseReviewController {
     public ResponseEntity<ApiResponse<Void>> deleteReview(
             @PathVariable Long reviewId) {
 
-        User currentUser = securityHelper.getCurrentUser();
-        UUID userId = currentUser.getId();
+        UUID userId = securityHelper.getCurrentUserIdAsUUID();
 
         //Kiểm tra quyền
         if (!courseReviewService.isReviewOwnedByUser(reviewId, userId)) {
@@ -155,7 +153,7 @@ public class CourseReviewController {
     public ResponseEntity<ApiResponse<Boolean>> hasUserReviewedCourse(
             @PathVariable UUID courseId) {
 
-        UUID userId = securityHelper.getCurrentUser().getId();
+        UUID userId = securityHelper.getCurrentUserIdAsUUID();
         boolean hasReviewed = courseReviewService.hasUserReviewedCourse(userId, courseId);
 
         return ResponseEntity.ok(new ApiResponse<>("success",

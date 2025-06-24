@@ -94,7 +94,7 @@ public class VideoProcessorService implements com.vinaacademy.platform.feature.v
                 .title("Video " + video.getTitle() + " đã được xử lý thành công")
                 .content("Bạn có thể xem tại đây.")
                 .targetUrl(frontendUrl + "/instructor/courses/" + courseId + "/lectures/" + video.getId())
-                .userId(video.getAuthor().getId())
+                .userId(video.getAuthorId())
                 .build());
     }
 
@@ -104,7 +104,7 @@ public class VideoProcessorService implements com.vinaacademy.platform.feature.v
                 .title("Lỗi xử lý video " + video.getTitle())
                 .content("Có lỗi xảy ra: " + errorMessage)
                 .targetUrl(frontendUrl + "/instructor/courses/" + courseId + "/lectures/" + video.getId())
-                .userId(video.getAuthor().getId())
+                .userId(video.getAuthorId())
                 .build());
     }
 

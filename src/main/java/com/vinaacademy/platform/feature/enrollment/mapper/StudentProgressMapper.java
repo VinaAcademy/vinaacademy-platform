@@ -10,9 +10,9 @@ import org.mapstruct.factory.Mappers;
 public interface StudentProgressMapper {
     StudentProgressMapper INSTANCE = Mappers.getMapper(StudentProgressMapper.class);
 
-    @Mapping(source = "user.id", target = "studentId")
-    @Mapping(source = "user.fullName", target = "studentName")
-    @Mapping(source = "user.email", target = "studentEmail")
+    @Mapping(source = "userId", target = "studentId")
+    @Mapping(target = "studentName", ignore = true)
+    @Mapping(target = "studentEmail", ignore = true)
     @Mapping(source = "course.id", target = "courseId")
     @Mapping(source = "course.name", target = "courseName")
     @Mapping(source = "progressPercentage", target = "progress")

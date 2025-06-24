@@ -8,10 +8,9 @@ import com.vinaacademy.platform.feature.cart.mapper.CartMapper;
 import com.vinaacademy.platform.feature.cart.repository.CartRepository;
 import com.vinaacademy.platform.feature.order_payment.entity.Coupon;
 import com.vinaacademy.platform.feature.order_payment.repository.CouponRepository;
-import com.vinaacademy.platform.feature.user.UserRepository;
-import com.vinaacademy.platform.feature.user.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import vn.vinaacademy.common.security.SecurityContextHelper;
 
 import java.util.UUID;
 
@@ -20,14 +19,18 @@ public class CartServiceImpl implements CartService {
     @Autowired
     private CartRepository cartRepository;
     @Autowired
-    private UserRepository userRepository;
-    @Autowired
     private CartMapper cartMapper;
     @Autowired
     private CouponRepository couponRepository;
+    @Autowired
+    private SecurityContextHelper securityContextHelper;
 
     @Override
     public CartDto getCart(UUID userId) {
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
+        if (!currentUserId.equals(userId)) {
+            throw BadRequestException.message("Bạn không có quyền truy cập giỏ hàng của người dùng khác");
+        }
         Cart cart = cartRepository.findByUserId(userId)
                 .orElse(null);
         CartDto cartDto = cartMapper.toDTO(cart);
@@ -43,38 +46,32 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartDto createCart(CartRequest request) {
-        if (cartRepository.existsByUserId(request.getUser_id()))
-            throw BadRequestException.message("Cart của ID người dùng này đã tồn tại");
-
-        User userp = userRepository.findById(request.getUser_id())
-                .orElseThrow(() -> BadRequestException.message("Không tìm thấy ID người dùng này"));
-        Cart cart = Cart.builder().user(userp).coupon(null).build();
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
+        Cart cart = Cart.builder().userId(currentUserId).coupon(null).build();
         cartRepository.save(cart);
-        CartDto cartDto = cartMapper.toDTO(cart);
-        return cartDto;
+        return cartMapper.toDTO(cart);
     }
 
     @Override
     public CartDto updateCart(CartRequest request) {
-        Cart cart = cartRepository.findByUserId(request.getUser_id())
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
+        Cart cart = cartRepository.findByUserId(currentUserId)
                 .orElseThrow(() -> BadRequestException.message("Không tìm thấy Cart của ID người dùng này"));
-        User userp = userRepository.findById(request.getUser_id())
-                .orElseThrow(() -> BadRequestException.message("Không tìm thấy ID người dùng này"));
         Coupon coupon = null;
         if (request.getCoupon_id() != null) {
             coupon = couponRepository.findById(request.getCoupon_id())
                     .orElseThrow(() -> BadRequestException.message("Không tìm thấy coupon"));
         }
         cart.setCoupon(coupon);
-        cart.setUser(userp);
+        cart.setUserId(currentUserId);
         cartRepository.save(cart);
-        CartDto cartDto = cartMapper.toDTO(cart);
-        return cartDto;
+        return cartMapper.toDTO(cart);
     }
 
     @Override
     public void deleteCart(CartRequest request) {
-        Cart cart = cartRepository.findByUserId(request.getUser_id())
+        UUID currentUserId = securityContextHelper.getCurrentUserIdAsUUID();
+        Cart cart = cartRepository.findByUserId(currentUserId)
                 .orElseThrow(() -> BadRequestException.message("Không tìm thấy Cart của ID người dùng này"));
         cartRepository.delete(cart);
     }

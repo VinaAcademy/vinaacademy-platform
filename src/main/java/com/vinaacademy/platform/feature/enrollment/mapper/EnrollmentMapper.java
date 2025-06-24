@@ -11,7 +11,7 @@ import org.mapstruct.factory.Mappers;
 public interface EnrollmentMapper {
     EnrollmentMapper INSTANCE = Mappers.getMapper(EnrollmentMapper.class);
 
-    @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "userId", target = "userId")
     @Mapping(source = "course.id", target = "courseId")
     @Mapping(source = "course.name", target = "courseName")
     @Mapping(source = "course.image", target = "courseImage")

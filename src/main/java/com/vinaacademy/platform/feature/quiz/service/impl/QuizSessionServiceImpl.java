@@ -5,7 +5,6 @@ import com.vinaacademy.platform.feature.quiz.dto.UserAnswerRequest;
 import com.vinaacademy.platform.feature.quiz.entity.QuizSession;
 import com.vinaacademy.platform.feature.quiz.repository.QuizSessionRepository;
 import com.vinaacademy.platform.feature.quiz.service.QuizCacheService;
-import com.vinaacademy.platform.feature.quiz.service.QuizService;
 import com.vinaacademy.platform.feature.quiz.service.QuizSessionService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
@@ -33,13 +32,13 @@ public class QuizSessionServiceImpl implements QuizSessionService {
         session.setActive(false);
         quizSessionRepository.save(session);
         // remove cached answers
-        quizCacheService.clearCache(session.getUser().getId(), session.getId(), session.getQuiz().getId());
+        quizCacheService.clearCache(session.getUserId(), session.getId(), session.getQuiz().getId());
     }
 
     @Override
     public QuizSubmissionRequest getQuizSubmissionBySession(QuizSession session) {
         // submit cached answers to the database
-        List<UserAnswerRequest> cachedAnswers = quizCacheService.getCachedUserAnswers(session.getUser().getId(), session.getId(), session.getQuiz().getId())
+        List<UserAnswerRequest> cachedAnswers = quizCacheService.getCachedUserAnswers(session.getUserId(), session.getId(), session.getQuiz().getId())
                 .values()
                 .stream()
                 .toList();

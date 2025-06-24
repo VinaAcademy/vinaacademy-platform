@@ -1,5 +1,7 @@
 package com.vinaacademy.platform.feature.review.service;
 
+import com.vinaacademy.platform.client.UserClient;
+import com.vinaacademy.platform.client.dto.UserDto;
 import com.vinaacademy.platform.exception.UnauthorizedException;
 import com.vinaacademy.platform.feature.common.exception.ResourceNotFoundException;
 import com.vinaacademy.platform.feature.course.entity.Course;
@@ -10,8 +12,6 @@ import com.vinaacademy.platform.feature.review.dto.CourseReviewRequestDto;
 import com.vinaacademy.platform.feature.review.entity.CourseReview;
 import com.vinaacademy.platform.feature.review.mapper.CourseReviewMapper;
 import com.vinaacademy.platform.feature.review.repository.CourseReviewRepository;
-import com.vinaacademy.platform.feature.user.UserRepository;
-import com.vinaacademy.platform.feature.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,15 +29,14 @@ import java.util.stream.Collectors;
 public class CourseReviewServiceImpl implements CourseReviewService {
 
     private final CourseReviewRepository courseReviewRepository;
-    private final UserRepository userRepository;
+    private final UserClient userClient;
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
 
     @Override
     @Transactional
     public CourseReviewDto createOrUpdateReview(UUID userId, CourseReviewRequestDto requestDto) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với ID: " + userId));
+        UserDto user = userClient.getUserByIdAsDto(userId).getData();
 
         Course course = courseRepository.findById(requestDto.getCourseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khóa học với ID: " + requestDto.getCourseId()));
@@ -64,7 +63,7 @@ public class CourseReviewServiceImpl implements CourseReviewService {
         // Cập nhật đánh giá trung bình của khóa học
         updateCourseAverageRating(course.getId());
 
-        return CourseReviewMapper.INSTANCE.toDto(courseReview);
+        return CourseReviewMapper.INSTANCE.toDto(courseReview, user);
     }
 
     @Override
@@ -83,13 +82,11 @@ public class CourseReviewServiceImpl implements CourseReviewService {
     @Transactional(readOnly = true)
     public List<CourseReviewDto> getUserReviews(UUID userId) {
         // Kiểm tra người dùng tồn tại
-        if (!userRepository.existsById(userId)) {
-            throw new ResourceNotFoundException("Không tìm thấy người dùng với ID: " + userId);
-        }
+        UserDto user = userClient.getUserByIdAsDto(userId).getData();
 
         List<CourseReview> reviews = courseReviewRepository.findByUserId(userId);
         return reviews.stream()
-                .map(CourseReviewMapper.INSTANCE::toDto)
+                .map(v -> CourseReviewMapper.INSTANCE.toDto(v, user))
                 .collect(Collectors.toList());
     }
 
@@ -98,8 +95,8 @@ public class CourseReviewServiceImpl implements CourseReviewService {
     public CourseReviewDto getReviewById(Long reviewId) {
         CourseReview review = courseReviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đánh giá với ID: " + reviewId));
-
-        return CourseReviewMapper.INSTANCE.toDto(review);
+        UserDto user = userClient.getUserByIdAsDto(review.getUserId()).getData();
+        return CourseReviewMapper.INSTANCE.toDto(review, user);
     }
 
     @Override

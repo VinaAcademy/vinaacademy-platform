@@ -24,16 +24,12 @@ import com.vinaacademy.platform.feature.lesson.service.LessonService;
 import com.vinaacademy.platform.feature.log.service.LogService;
 import com.vinaacademy.platform.feature.section.entity.Section;
 import com.vinaacademy.platform.feature.section.repository.SectionRepository;
-import com.vinaacademy.platform.feature.user.auth.annotation.RequiresResourcePermission;
-import com.vinaacademy.platform.feature.user.auth.helpers.SecurityHelper;
-import com.vinaacademy.platform.feature.user.auth.service.AuthorizationService;
-import com.vinaacademy.platform.feature.user.constant.ResourceConstants;
-import com.vinaacademy.platform.feature.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.vinaacademy.common.security.SecurityContextHelper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,7 +44,7 @@ public class LessonServiceImpl implements LessonService {
 
     private final LessonRepository lessonRepository;
     private final SectionRepository sectionRepository;
-    private final AuthorizationService authorizationService;
+    //    private final AuthorizationService authorizationService;
     private final LogService logService;
     private final UserProgressRepository userProgressRepository;
     private final EnrollmentRepository enrollmentRepository;
@@ -60,7 +56,7 @@ public class LessonServiceImpl implements LessonService {
     @Autowired
     private LessonCreatorFactory lessonCreatorFactory;
     @Autowired
-    private SecurityHelper securityHelper;
+    private SecurityContextHelper securityHelper;
 
     @Override
     @Transactional(readOnly = true)
@@ -82,14 +78,14 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     @Transactional
-    @RequiresResourcePermission(
-            resourceType = ResourceConstants.SECTION,
-            permission = ResourceConstants.VIEW_OWN,
-            idParam = "request.sectionId"
-    )
+//    @RequiresResourcePermission(
+//            resourceType = ResourceConstants.SECTION,
+//            permission = ResourceConstants.VIEW_OWN,
+//            idParam = "request.sectionId"
+//    )
     public LessonDto createLesson(LessonRequest request) {
         log.info("Creating new lesson with title: {}, type: {}", request.getTitle(), request.getType());
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
         Section section = findSectionById(request.getSectionId());
 
         // Luôn tạo lesson mới ở cuối danh sách
@@ -97,7 +93,7 @@ public class LessonServiceImpl implements LessonService {
         request.setOrderIndex(existingLessons.size()); // Đặt ở vị trí cuối cùng
 
         // Tạo lesson mới
-        LessonDto newLesson = createLesson(request, currentUser);
+        LessonDto newLesson = createlesson(request, currentUserId);
 
         // Cập nhật trạng thái khóa học nếu cần
         updateCourseStatusAfterAddingLesson(section.getCourse());
@@ -129,14 +125,14 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     @Transactional
-    @RequiresResourcePermission(
-            resourceType = ResourceConstants.SECTION,
-            permission = ResourceConstants.VIEW_OWN,
-            idParam = "request.sectionId"
-    )
-    public LessonDto createLesson(LessonRequest request, User author) {
+//    @RequiresResourcePermission(
+//            resourceType = ResourceConstants.SECTION,
+//            permission = ResourceConstants.VIEW_OWN,
+//            idParam = "request.sectionId"
+//    )
+    public LessonDto createlesson(LessonRequest request, UUID authorId) {
         log.info("Creating new lesson with title: {}, type: {} by explicit author: {}",
-                request.getTitle(), request.getType(), author.getUsername());
+                request.getTitle(), request.getType(), authorId);
         Section section = findSectionById(request.getSectionId());
 
         validateOrderIndex(request.getOrderIndex(), section, null);
@@ -145,7 +141,7 @@ public class LessonServiceImpl implements LessonService {
         LessonCreator creator = lessonCreatorFactory.getCreator(request.getType());
 
         // Use the factory method to create the lesson
-        Lesson lesson = creator.createLesson(request, section, author);
+        Lesson lesson = creator.createLesson(request, section, authorId);
 
         // Log the creation
         logService.log("Lesson", "CREATE",
@@ -158,11 +154,11 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     @Transactional
-    @RequiresResourcePermission(
-            resourceType = ResourceConstants.LESSON,
-            permission = ResourceConstants.EDIT,
-            idParam = "id"
-    )
+//    @RequiresResourcePermission(
+//            resourceType = ResourceConstants.LESSON,
+//            permission = ResourceConstants.EDIT,
+//            idParam = "id"
+//    )
     public LessonDto updateLesson(UUID id, LessonRequest request) {
         log.info("Updating lesson with id: {}", id);
         Lesson existingLesson = findLessonById(id);
@@ -172,9 +168,9 @@ public class LessonServiceImpl implements LessonService {
         LessonDto oldLessonData = lessonMapper.lessonToLessonDto(existingLesson);
 
         // Check if user has permission using AuthorizationService
-        if (!authorizationService.canModifyResource(existingLesson.getAuthor().getId())) {
-            throw new ValidationException("You don't have permission to update this lesson");
-        }
+//        if (!authorizationService.canModifyResource(existingLesson.getAuthorId().getId())) {
+//            throw new ValidationException("You don't have permission to update this lesson");
+//        }
 
         validateLessonRequest(request);
         validateOrderIndex(request.getOrderIndex(), section, id);
@@ -213,11 +209,11 @@ public class LessonServiceImpl implements LessonService {
 
     @Override
     @Transactional
-    @RequiresResourcePermission(
-            resourceType = ResourceConstants.LESSON,
-            permission = ResourceConstants.DELETE,
-            idParam = "id"
-    )
+//    @RequiresResourcePermission(
+//            resourceType = ResourceConstants.LESSON,
+//            permission = ResourceConstants.DELETE,
+//            idParam = "id"
+//    )
     public void deleteLesson(UUID id) {
         log.info("Deleting lesson with id: {}", id);
         Lesson lesson = findLessonById(id);
@@ -226,9 +222,9 @@ public class LessonServiceImpl implements LessonService {
         int deletedOrderIndex = lesson.getOrderIndex();
 
         // Check if user has permission using AuthorizationService
-        if (!authorizationService.canModifyResource(lesson.getAuthor().getId())) {
-            throw new ValidationException("You don't have permission to delete this lesson");
-        }
+//        if (!authorizationService.canModifyResource(lesson.getAuthorId().getId())) {
+//            throw new ValidationException("You don't have permission to delete this lesson");
+//        }
 
         LessonDto lessonData = lessonMapper.lessonToLessonDto(lesson);
 
@@ -277,22 +273,22 @@ public class LessonServiceImpl implements LessonService {
 
     @Transactional
     @Override
-    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON, idParam = "lessonId")
+//    @RequiresResourcePermission(resourceType = ResourceConstants.LESSON, idParam = "lessonId")
     public void completeLesson(UUID lessonId) {
-        User currentUser = securityHelper.getCurrentUser();
+        UUID currentUserId = securityHelper.getCurrentUserIdAsUUID();
         Lesson lesson = findLessonById(lessonId);
 
         if (lesson.getType() == LessonType.QUIZ) {
             throw BadRequestException.message("Bài học này là bài kiểm tra, không thể đánh dấu hoàn thành");
         }
 
-        markLessonCompleted(lesson, currentUser);
+        markLessonCompleted(lesson, currentUserId);
     }
 
-    public void markLessonCompleted(Lesson lesson, User currentUser) {
+    public void markLessonCompleted(Lesson lesson, UUID currentUserId) {
         // 1. Mark lesson completed if not already
         Optional<UserProgress> userProgressOpt = userProgressRepository
-                .findByLessonIdAndUserId(lesson.getId(), currentUser.getId())
+                .findByLessonIdAndUserId(lesson.getId(), currentUserId)
                 .filter(UserProgress::isCompleted);
         if (userProgressOpt.isPresent()) {
             throw BadRequestException.message("Học viên đã hoàn thành bài học này");
@@ -301,7 +297,7 @@ public class LessonServiceImpl implements LessonService {
         UserProgress userProgress = userProgressOpt.orElseGet(() ->
                 userProgressRepository.save(UserProgress.builder()
                         .lesson(lesson)
-                        .user(currentUser)
+                        .userId(currentUserId)
                         .completed(true)
                         .build())
         );
@@ -309,11 +305,12 @@ public class LessonServiceImpl implements LessonService {
 
         // 2. Update enrollment progress
         UUID courseId = lesson.getSection().getCourse().getId();
-        Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(currentUser.getId(), courseId)
+        Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(currentUserId, courseId)
                 .orElseThrow(() -> BadRequestException.message("Học viên chưa đăng ký khóa học này"));
 
         long totalLessons = lessonRepository.countBySectionCourseId(courseId);
-        long completedLessons = userProgressRepository.countCompletedByUserIdAndCourseId(currentUser.getId(), courseId);
+        long completedLessons = userProgressRepository
+                .countCompletedByUserIdAndCourseId(currentUserId, courseId);
 
         if (totalLessons == 0) {
             throw new ValidationException("Không thể tính tiến độ: khóa học không có bài học nào");
