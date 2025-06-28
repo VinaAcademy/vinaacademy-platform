@@ -1,6 +1,7 @@
 package com.vinaacademy.platform.feature.course.service;
 
 import com.vinaacademy.platform.configuration.AppConfig;
+import com.vinaacademy.platform.event.NotificationEventSender;
 import com.vinaacademy.platform.exception.BadRequestException;
 import com.vinaacademy.platform.feature.category.Category;
 import com.vinaacademy.platform.feature.category.repository.CategoryRepository;
@@ -29,9 +30,6 @@ import com.vinaacademy.platform.feature.lesson.dto.LessonDto;
 import com.vinaacademy.platform.feature.lesson.entity.Lesson;
 import com.vinaacademy.platform.feature.lesson.entity.UserProgress;
 import com.vinaacademy.platform.feature.lesson.mapper.LessonMapper;
-import com.vinaacademy.platform.feature.notification.dto.NotificationCreateDTO;
-import com.vinaacademy.platform.feature.notification.enums.NotificationType;
-import com.vinaacademy.platform.feature.notification.service.NotificationService;
 import com.vinaacademy.platform.feature.review.dto.CourseReviewDto;
 import com.vinaacademy.platform.feature.review.mapper.CourseReviewMapper;
 import com.vinaacademy.platform.feature.section.dto.SectionDto;
@@ -50,6 +48,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.vinaacademy.common.constant.AuthConstants;
 import vn.vinaacademy.common.security.SecurityContextHelper;
+import vn.vinaacademy.kafka.event.NotificationCreateEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -83,10 +82,12 @@ public class CourseServiceImpl implements CourseService {
     @Autowired
     private SecurityContextHelper securityContextHelper;
     @Autowired
-    private SlugGeneratorHelper slugGeneratorHelper;    @Autowired
-    private NotificationService notificationService;
+    private SlugGeneratorHelper slugGeneratorHelper;
     @Autowired
     private com.vinaacademy.platform.client.service.UserService userService;
+
+    @Autowired
+    private NotificationEventSender notificationService;
 
     @Override
     public Boolean isInstructorOfCourse(UUID courseId, UUID instructorId) {
@@ -317,7 +318,9 @@ public class CourseServiceImpl implements CourseService {
 
         Page<Course> coursePage = courseRepository.findAll(spec, pageable);
         return coursePage.map(courseMapper::toDTO);
-    }    @Override
+    }
+
+    @Override
     public Page<CourseDto> getCoursesByInstructor(UUID instructorId, int page, int size,
                                                   String sortBy, String sortDirection) {
         Pageable pageable = createPageable(page, size, sortBy, sortDirection);
@@ -494,12 +497,12 @@ public class CourseServiceImpl implements CourseService {
                 "/instructor/courses/",
                 course.getId(),
                 "/content");
-        NotificationCreateDTO request = NotificationCreateDTO.builder()
+        NotificationCreateEvent request = NotificationCreateEvent.builder()
                 .title(title)
                 .content(message)
                 .targetUrl(url)
                 .userId(userId)
-                .type(NotificationType.COURSE_APPROVAL)
+                .type(NotificationCreateEvent.NotificationType.COURSE_APPROVAL)
                 .build();
         notificationService.createNotification(request);
     }

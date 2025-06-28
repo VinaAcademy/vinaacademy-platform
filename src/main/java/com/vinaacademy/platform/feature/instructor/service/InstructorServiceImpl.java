@@ -1,16 +1,15 @@
 package com.vinaacademy.platform.feature.instructor.service;
 
 import com.vinaacademy.platform.configuration.AppConfig;
+import com.vinaacademy.platform.event.NotificationEventSender;
 import com.vinaacademy.platform.exception.BadRequestException;
 import com.vinaacademy.platform.feature.instructor.dto.InstructorInfoDto;
-import com.vinaacademy.platform.feature.notification.dto.NotificationCreateDTO;
-import com.vinaacademy.platform.feature.notification.enums.NotificationType;
-import com.vinaacademy.platform.feature.notification.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.vinaacademy.common.security.SecurityContextHelper;
 import vn.vinaacademy.common.security.annotation.HasAnyRole;
+import vn.vinaacademy.kafka.event.NotificationCreateEvent;
 
 import java.util.Set;
 import java.util.UUID;
@@ -22,7 +21,7 @@ public class InstructorServiceImpl implements InstructorService {
     @Autowired
     private SecurityContextHelper securityHelper;
     @Autowired
-    private NotificationService notificationService;
+    private NotificationEventSender notificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -91,12 +90,12 @@ public class InstructorServiceImpl implements InstructorService {
         String title = "Chào mừng bạn đến cộng đồng giảng viên VinaAcademy";
         String message = "Chúng tôi rất vui khi bạn trở thành một phần của cộng đồng giảng viên tại VinaAcademy.";
         String targetUrl = AppConfig.INSTANCE.getFrontendUrl() + "/instructor/dashboard";
-        NotificationCreateDTO request = NotificationCreateDTO.builder()
+        NotificationCreateEvent request = NotificationCreateEvent.builder()
                 .userId(userId)
                 .title(title)
                 .content(message)
                 .targetUrl(targetUrl)
-                .type(NotificationType.SYSTEM)
+                .type(NotificationCreateEvent.NotificationType.SYSTEM)
                 .build();
 
         notificationService.createNotification(request);
