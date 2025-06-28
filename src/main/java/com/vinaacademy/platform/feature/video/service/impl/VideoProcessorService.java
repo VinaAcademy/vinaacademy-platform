@@ -1,8 +1,7 @@
 package com.vinaacademy.platform.feature.video.service.impl;
 
+import com.vinaacademy.platform.event.NotificationEventSender;
 import com.vinaacademy.platform.exception.BadRequestException;
-import com.vinaacademy.platform.feature.notification.dto.NotificationCreateDTO;
-import com.vinaacademy.platform.feature.notification.service.NotificationService;
 import com.vinaacademy.platform.feature.request.ProcessVideoRequest;
 import com.vinaacademy.platform.feature.storage.entity.MediaFile;
 import com.vinaacademy.platform.feature.storage.properties.StorageProperties;
@@ -21,6 +20,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import vn.vinaacademy.kafka.event.NotificationCreateEvent;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,7 +36,7 @@ public class VideoProcessorService implements com.vinaacademy.platform.feature.v
     private final VideoRepository videoRepository;
     private final MediaFileRepository mediaFileRepository;
 
-    private final NotificationService notificationService;
+    private final NotificationEventSender notificationService;
     private final StorageProperties storageProperties;
 
     @Value("${application.url.frontend}")
@@ -90,7 +90,7 @@ public class VideoProcessorService implements com.vinaacademy.platform.feature.v
 
     private void notifySuccess(Video video) {
         String courseId = video.getSection().getCourse().getId().toString();
-        notificationService.createNotification(NotificationCreateDTO.builder()
+        notificationService.createNotification(NotificationCreateEvent.builder()
                 .title("Video " + video.getTitle() + " đã được xử lý thành công")
                 .content("Bạn có thể xem tại đây.")
                 .targetUrl(frontendUrl + "/instructor/courses/" + courseId + "/lectures/" + video.getId())
@@ -100,7 +100,7 @@ public class VideoProcessorService implements com.vinaacademy.platform.feature.v
 
     private void notifyFailure(Video video, String errorMessage) {
         String courseId = video.getSection().getCourse().getId().toString();
-        notificationService.createNotification(NotificationCreateDTO.builder()
+        notificationService.createNotification(NotificationCreateEvent.builder()
                 .title("Lỗi xử lý video " + video.getTitle())
                 .content("Có lỗi xảy ra: " + errorMessage)
                 .targetUrl(frontendUrl + "/instructor/courses/" + courseId + "/lectures/" + video.getId())
