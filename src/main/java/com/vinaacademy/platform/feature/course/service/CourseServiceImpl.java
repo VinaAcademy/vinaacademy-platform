@@ -3,9 +3,6 @@ package com.vinaacademy.platform.feature.course.service;
 import com.vinaacademy.platform.configuration.AppConfig;
 import com.vinaacademy.platform.event.NotificationEventSender;
 import com.vinaacademy.platform.exception.BadRequestException;
-import com.vinaacademy.platform.feature.category.Category;
-import com.vinaacademy.platform.feature.category.repository.CategoryRepository;
-import com.vinaacademy.platform.feature.category.service.CategoryService;
 import com.vinaacademy.platform.feature.common.helpers.SlugGeneratorHelper;
 import com.vinaacademy.platform.feature.common.utils.SlugUtils;
 import com.vinaacademy.platform.feature.course.dto.CourseCountStatusDto;
@@ -62,15 +59,11 @@ public class CourseServiceImpl implements CourseService {
     @Autowired
     private CourseRepository courseRepository;
     @Autowired
-    private CategoryRepository categoryRepository;
-    @Autowired
     private SectionRepository sectionRepository;
     @Autowired
     private EnrollmentRepository enrollmentRepository;
     @Autowired
     private CourseMapper courseMapper;
-    @Autowired
-    private CategoryService categoryService;
     @Autowired
     private CourseInstructorRepository courseInstructorRepository;
     @Autowired
@@ -196,11 +189,11 @@ public class CourseServiceImpl implements CourseService {
                 request.getSlug();
         String slug = slugGeneratorHelper.generateSlug(baseSlug, s -> !courseRepository.existsBySlug(s));
 
-        Category category = categoryRepository.findBySlug(request.getCategorySlug())
-                .orElseThrow(() -> BadRequestException.message("Không tìm thấy danh mục"));
+//        Category category = categoryRepository.findBySlug(request.getCategorySlug())
+//                .orElseThrow(() -> BadRequestException.message("Không tìm thấy danh mục"));
         Course course = Course.builder()
                 .name(request.getName())
-                .category(category)
+//                .category(category)
                 .description(request.getDescription())
                 .image(request.getImage())
                 .language(request.getLanguage())
@@ -239,11 +232,11 @@ public class CourseServiceImpl implements CourseService {
             throw BadRequestException.message("Slug đã tồn tại");
         }
 
-        Category category = categoryRepository.findBySlug(request.getCategorySlug())
-                .orElseThrow(() -> BadRequestException.message("Không tìm thấy danh mục"));
+//        Category category = categoryRepository.findBySlug(request.getCategorySlug())
+//                .orElseThrow(() -> BadRequestException.message("Không tìm thấy danh mục"));
         course.setName(request.getName());
         course.setSlug(newSlug);
-        course.setCategory(category);
+//        course.setCategory(category);
         course.setDescription(request.getDescription());
         course.setImage(request.getImage());
         course.setLanguage(request.getLanguage());
@@ -277,7 +270,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public List<CourseDto> getCoursesByCategory(String slug) {
-        categoryRepository.findBySlug(slug).orElseThrow(() -> BadRequestException.message("Danh mục không tồn tại"));
+//        categoryRepository.findBySlug(slug).orElseThrow(() -> BadRequestException.message("Danh mục không tồn tại"));
         return courseRepository.findAllCourseByCategory(slug).stream().map(courseMapper::toDTO)
                 .toList();
     }

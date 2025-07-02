@@ -13,18 +13,18 @@ import org.mapstruct.factory.Mappers;
 public interface CourseMapper {
     CourseMapper INSTANCE = Mappers.getMapper(CourseMapper.class);
 
-    @Mapping(source = "category.name", target = "categoryName")
+//    @Mapping(source = "category.name", target = "categoryName")
     CourseDto toDTO(Course course);
     
-    @Mapping(source = "category.name", target = "categoryName")
-    @Mapping(source = "category.slug", target = "categorySlug")
+//    @Mapping(source = "category.name", target = "categoryName")
+//    @Mapping(source = "category.slug", target = "categorySlug")
     @Mapping(target = "instructors", ignore = true)
     @Mapping(target = "ownerInstructor", ignore = true)
     @Mapping(target = "sections", ignore = true)
     @Mapping(target = "reviews", ignore = true)
     CourseDetailsResponse toCourseDetailsResponse(Course course);
 
-    @Mapping(target = "category", ignore = true)
+//    @Mapping(target = "category", ignore = true)
     @Mapping(target = "cartItems", ignore = true)
     @Mapping(target = "orderItems", ignore = true)
     @Mapping(target = "courseReviews", ignore = true)

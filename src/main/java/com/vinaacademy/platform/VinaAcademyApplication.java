@@ -9,6 +9,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
+import vn.vinaacademy.kafka.KafkaProducerConfig;
 
 import java.util.TimeZone;
 
@@ -18,7 +19,7 @@ import java.util.TimeZone;
         "vn.vinaacademy.common"
 })
 @EnableFeignClients
-@Import({KafkaProducer.class})
+@Import({KafkaProducerConfig.class})
 public class VinaAcademyApplication {
 
     public static void main(String[] args) {
