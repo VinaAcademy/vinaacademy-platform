@@ -1,7 +1,6 @@
 package com.vinaacademy.platform.feature.course.entity;
 
 import com.vinaacademy.platform.feature.cart.entity.CartItem;
-import com.vinaacademy.platform.feature.category.Category;
 import com.vinaacademy.platform.feature.common.entity.BaseEntity;
 import com.vinaacademy.platform.feature.course.enums.CourseLevel;
 import com.vinaacademy.platform.feature.course.enums.CourseStatus;
@@ -60,9 +59,9 @@ public class Course extends BaseEntity {
     @Column(name = "language")
     private String language = "Tiếng Việt";
 
-    @ManyToOne
-    @JoinColumn(name = "category_id")
-    private Category category;
+//    @ManyToOne
+//    @JoinColumn(name = "category_id")
+//    private Category category;
 
     @Column(name = "rating")
     private double rating = 0.0;
